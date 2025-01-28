@@ -21,3 +21,12 @@ cd BlockHub
 chmod +x setup.sh
 ./setup.sh
 ```
+
+### Docker
+
+Running on Docker (use this [Dockerfile](../docker/Dockerfile)) 
+
+```shell
+chmod +x start-docker.sh
+./start-docker.sh
+```
