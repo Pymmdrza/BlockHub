@@ -1,36 +1,44 @@
 {
   "links": [
     {
-      "type": "Full Blockchain Data11",
-      "link": "https://cdn3.mmdrza.com/datasets/blockchain_full1.tar.gz",
-      "format": "TAR.GZ",
-      "size": "395 GB",
-      "description": "Complete Bitcoin blockchain data including all blocks, transactions, and metadata from genesis to present",
-      "updated": "2024-03-15T12:00:00Z"
+      "type": "All Addresses",
+      "link": "https://objects.mmdrza.com/Latest_Bitcoin_Addresses.tsv.gz",
+      "format": ".tsv",
+      "size": "1.58 GB",
+      "description": "All Bitcoin Address Wallets with any type of address",
+      "updated": "2025-02-10T16:15:46"
     },
     {
-      "type": "Transaction Histor1y",
-      "link": "https://cdn3.mmdrza.com/datasets/transactions_history.csv.gz",
-      "format": "CSV",
-      "size": "85 GB",
-      "description": "Historical transaction data with detailed information about inputs, outputs, and fees",
-      "updated": "2024-03-15T12:00:00Z"
+      "type": "Latest Rich Addresses",
+      "link": "https://objects.mmdrza.com/Latest_Rich_Bitcoin_Addresses.txt.gz",
+      "format": ".txt",
+      "size": "1.04 GB",
+      "description": "All Bitcoin Address Wallets with any type of address",
+      "updated": "2025-02-10T16:15:46"
     },
     {
-      "type": "Address Database",
-      "link": "https://cdn3.mmdrza.com/datasets/addresses.csv.gz",
-      "format": "CSV",
-      "size": "45 GB",
-      "description": "Comprehensive list of Bitcoin addresses with their transaction histories and balances",
-      "updated": "2024-03-15T12:00:00Z"
+      "type": "Latest Rich Bitcoin P2PKH Addresses",
+      "link": "https://objects.mmdrza.com/Latest_Rich_Bitcoin_P2PKH.txt.gz",
+      "format": ".txt",
+      "size": "361.47 MB",
+      "description": "All Bitcoin P2PKH Address Wallets (Start with 1)",
+      "updated": "2025-02-10T16:15:46"
     },
     {
-      "type": "Network Statistics",
-      "link": "https://cdn3.mmdrza.com/datasets/network_stats.json.gz",
-      "format": "JSON",
-      "size": "2.5 GB",
-      "description": "Historical network statistics including hashrate, difficulty, and node distribution",
-      "updated": "2024-03-15T12:00:00Z"
+      "type": "Latest Rich Bitcoin P2SH Addresses",
+      "link": "https://objects.mmdrza.com/Latest_Rich_Bitcoin_P2SH.txt.gz",
+      "format": ".txt",
+      "size": "140 MB",
+      "description": "All Bitcoin P2SH Address Wallets (Start with 3)",
+      "updated": "2025-02-10T16:15:46"
+    },
+    {
+      "type": "Latest Rich Bitcoin P2WPKH Addresses",
+      "link": "https://objects.mmdrza.com/Latest_Rich_Bitcoin_BECH32.txt.gz",
+      "format": ".txt",
+      "size": "483 MB",
+      "description": "All Bitcoin BECH32 Address Wallets (Start with bc1)",
+      "updated": "2025-02-10T16:15:46"
     }
   ]
 }
