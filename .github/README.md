@@ -2,6 +2,11 @@
 
 Backend Service for index Bitcoin Address Wallet and index Transaction , Index Block + Show Real-Time All New Transaction's
 
+- Bitcoin Real Time New Transaction's
+- Bitcoin Transaction Check
+- Bitcoin Address Wallet Check
+- Bitcoin Block Data
+- Bitcoin Datasets dump
 
 ## Install and usage
 
