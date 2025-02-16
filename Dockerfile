@@ -7,9 +7,6 @@ WORKDIR /app
 # Copy package files
 COPY package*.json ./
 
-# copy dataset links download file
-COPY /src/public/dataset_links.json ./
-
 # Install dependencies
 RUN npm install
 
@@ -32,6 +29,9 @@ RUN rm -rf ./*
 
 # Copy built files from the first stage
 COPY --from=build /app/dist/ ./
+
+# copy dataset links download file
+COPY dataset_links.json ./
 
 # Expose port 80
 EXPOSE 80
