@@ -1,5 +1,5 @@
-# Use Node.js LTS (Alpine for smaller image size)
-FROM node:20-alpine
+# Stage 1: Build the app
+FROM node:20-alpine AS build
 
 # Set working directory
 WORKDIR /app
@@ -16,11 +16,23 @@ COPY . .
 # Build the app
 RUN npm run build
 
-# Expose port 3000
-EXPOSE 3000
+# Stage 2: Serve the built app using nginx
+FROM nginx:stable-alpine
+
+# Set working directory
+WORKDIR /usr/share/nginx/html
+
+# Remove default nginx static files
+RUN rm -rf ./*
+
+# Copy built files from the first stage
+COPY --from=build /app/dest/ ./
+
+# Expose port 80
+EXPOSE 80
 
 # Inform user about the status
-RUN echo "Build completed successfully. Starting the application..."
+RUN echo "Build completed successfully. Serving the application on port 80..."
 
-# Start the app with development server
-CMD ["npm", "run", "dev"]
+# Start nginx
+CMD ["nginx", "-g", "daemon off;"]
