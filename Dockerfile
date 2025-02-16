@@ -25,6 +25,9 @@ WORKDIR /usr/share/nginx/html
 # Remove default nginx static files
 RUN rm -rf ./*
 
+# copy dataset links download file
+COPY /app/public/dataset_links.json ./
+
 # Copy built files from the first stage
 COPY --from=build /app/dist/ ./
 
