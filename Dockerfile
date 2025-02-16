@@ -16,11 +16,11 @@ COPY . .
 # Build the app
 RUN npm run build
 
-# Install serve to run the built app
-RUN npm install -g serve
-
 # Expose port 3000
 EXPOSE 3000
 
-# Start the app
-CMD ["serve", "-s", "dist", "-l", "3000"]
+# Inform user about the status
+RUN echo "Build completed successfully. Starting the application..."
+
+# Start the app with development server
+CMD ["npm", "run", "dev"]
