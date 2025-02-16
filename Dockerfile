@@ -11,13 +11,13 @@ RUN apk add --no-cache libc6-compat
 COPY package*.json ./
 
 # Install dependencies and verify installation
-RUN npm install && npm list
+RUN npm install
 
 # Copy project files
 COPY . .
 
 # Build the app and check if the build directory exists
-RUN npm run build && ls -l dest/ || (echo "Build failed: 'dest/' not found" && exit 1)
+RUN npm run build && ls -l dist/ || (echo "Build failed: 'dist/' not found" && exit 1)
 
 # Stage 2: Serve the built app using nginx
 FROM nginx:stable-alpine
@@ -29,7 +29,7 @@ WORKDIR /usr/share/nginx/html
 RUN rm -rf ./*
 
 # Ensure `dest/` exists before copying
-COPY --from=build /app/dest/ ./ || (echo "Error: dest/ not found after build" && exit 1)
+COPY --from=build /app/dist/ ./ || (echo "Error: dist/ not found after build" && exit 1)
 
 # Expose port 80
 EXPOSE 80
