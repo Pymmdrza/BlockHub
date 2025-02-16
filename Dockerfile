@@ -4,17 +4,20 @@ FROM node:20-alpine AS build
 # Set working directory
 WORKDIR /app
 
+# Install required dependencies for Alpine
+RUN apk add --no-cache libc6-compat
+
 # Copy package files
 COPY package*.json ./
 
-# Install dependencies
-RUN npm install
+# Install dependencies and verify installation
+RUN npm install && npm list
 
 # Copy project files
 COPY . .
 
-# Build the app
-RUN npm run build
+# Build the app and check if the build directory exists
+RUN npm run build && ls -l dest/ || (echo "Build failed: 'dest/' not found" && exit 1)
 
 # Stage 2: Serve the built app using nginx
 FROM nginx:stable-alpine
@@ -25,8 +28,8 @@ WORKDIR /usr/share/nginx/html
 # Remove default nginx static files
 RUN rm -rf ./*
 
-# Copy built files from the first stage
-COPY --from=build /app/dest/ ./
+# Ensure `dest/` exists before copying
+COPY --from=build /app/dest/ ./ || (echo "Error: dest/ not found after build" && exit 1)
 
 # Expose port 80
 EXPOSE 80
