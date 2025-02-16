@@ -3,7 +3,20 @@ import { useParams, Link } from 'react-router-dom';
 import { fetchAddressInfo, formatBitcoinValue } from '../utils/api';
 import { truncateAddress } from '../utils/format';
 import { AddressResponse } from '../types';
-import { Loader2, ArrowLeft, Copy } from 'lucide-react';
+import { 
+  Loader2, 
+  ArrowLeft, 
+  Copy, 
+  Wallet,
+  ArrowUpRight,
+  ArrowDownRight,
+  Clock,
+  AlertCircle,
+  History,
+  ArrowRight,
+  Calendar,
+  DollarSign
+} from 'lucide-react';
 
 export const Address: React.FC = () => {
   const { address } = useParams<{ address: string }>();
@@ -80,65 +93,136 @@ export const Address: React.FC = () => {
       </div>
 
       <div className="bg-[#0E141B] dark:bg-[#0E141B] rounded-lg p-6 border border-gray-800">
-        <div className="flex items-center gap-2 p-4 bg-[#0B1017] rounded-lg border border-gray-800">
-          <span className="font-mono text-orange-500 text-sm truncate max-w-[300px] sm:max-w-[400px] md:max-w-[500px] lg:max-w-[600px]" title={data.address}>
-            {truncateAddress(data.address, 48)}
+        <div className="flex items-center gap-2 p-4 bg-[#0B1017] rounded-lg border border-gray-800 mb-6">
+          <Wallet className="w-5 h-5 text-orange-500 flex-shrink-0" />
+          <span 
+            className="font-mono text-orange-500 text-sm break-all"
+            style={{
+              wordBreak: 'break-word',
+              overflowWrap: 'break-word'
+            }}
+          >
+            {data.address}
           </span>
           <button 
             onClick={() => copyToClipboard(data.address)}
-            className="p-1 hover:bg-gray-800 rounded"
+            className="p-1 hover:bg-gray-800 rounded ml-auto flex-shrink-0"
             title="Copy address"
           >
             <Copy className="w-4 h-4" />
           </button>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           <div className="p-4 bg-[#0B1017] rounded-lg border border-gray-800">
-            <div className="text-sm text-gray-400 mb-1">Balance</div>
-            <div className="text-xl font-semibold">{formatBitcoinValue(data.balance)} BTC</div>
+            <div className="flex items-center gap-2 text-gray-400 mb-2">
+              <Wallet className="w-4 h-4" />
+              <span>Current Balance</span>
+            </div>
+            <div className="text-xl font-semibold text-green-400">
+              {formatBitcoinValue(data.balance)} BTC
+            </div>
           </div>
 
           <div className="p-4 bg-[#0B1017] rounded-lg border border-gray-800">
-            <div className="text-sm text-gray-400 mb-1">Total Received</div>
-            <div className="text-xl font-semibold">{formatBitcoinValue(data.totalReceived)} BTC</div>
+            <div className="flex items-center gap-2 text-gray-400 mb-2">
+              <ArrowUpRight className="w-4 h-4" />
+              <span>Total Sent</span>
+            </div>
+            <div className="text-xl font-semibold text-orange-400">
+              {formatBitcoinValue(data.totalSent)} BTC
+            </div>
           </div>
 
           <div className="p-4 bg-[#0B1017] rounded-lg border border-gray-800">
-            <div className="text-sm text-gray-400 mb-1">Total Sent</div>
-            <div className="text-xl font-semibold">{formatBitcoinValue(data.totalSent)} BTC</div>
+            <div className="flex items-center gap-2 text-gray-400 mb-2">
+              <ArrowDownRight className="w-4 h-4" />
+              <span>Total Received</span>
+            </div>
+            <div className="text-xl font-semibold text-green-400">
+              {formatBitcoinValue(data.totalReceived)} BTC
+            </div>
           </div>
 
           <div className="p-4 bg-[#0B1017] rounded-lg border border-gray-800">
-            <div className="text-sm text-gray-400 mb-1">Unconfirmed Balance</div>
-            <div className="text-xl font-semibold">{formatBitcoinValue(data.unconfirmedBalance)} BTC</div>
+            <div className="flex items-center gap-2 text-gray-400 mb-2">
+              <AlertCircle className="w-4 h-4" />
+              <span>Unconfirmed Balance</span>
+            </div>
+            <div className="text-xl font-semibold text-yellow-400">
+              {formatBitcoinValue(data.unconfirmedBalance)} BTC
+            </div>
           </div>
 
           <div className="p-4 bg-[#0B1017] rounded-lg border border-gray-800">
-            <div className="text-sm text-gray-400 mb-1">Unconfirmed Transactions</div>
-            <div className="text-xl font-semibold">{data.unconfirmedTxs}</div>
+            <div className="flex items-center gap-2 text-gray-400 mb-2">
+              <Clock className="w-4 h-4" />
+              <span>Unconfirmed Transactions</span>
+            </div>
+            <div className="text-xl font-semibold text-yellow-400">
+              {data.unconfirmedTxs}
+            </div>
           </div>
 
           <div className="p-4 bg-[#0B1017] rounded-lg border border-gray-800">
-            <div className="text-sm text-gray-400 mb-1">Total Transactions</div>
-            <div className="text-xl font-semibold">{data.txs}</div>
+            <div className="flex items-center gap-2 text-gray-400 mb-2">
+              <History className="w-4 h-4" />
+              <span>Total Transactions</span>
+            </div>
+            <div className="text-xl font-semibold">
+              {data.txs}
+            </div>
           </div>
         </div>
       </div>
 
       <div className="bg-[#0E141B] dark:bg-[#0E141B] rounded-lg p-6 border border-gray-800">
-        <h2 className="text-xl font-bold mb-4">Recent Transactions</h2>
+        <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
+          Transaction History
+          <span className="text-sm text-gray-400">({data.txids.length} transactions)</span>
+        </h2>
         <div className="space-y-3">
-          {data.txids.map((txid) => (
+          {data.txids.map((txid, index) => (
             <Link
               key={txid}
               to={`/tx/${txid}`}
-              className="flex items-center gap-2 p-4 bg-[#0B1017] rounded-lg border border-gray-800 hover:border-gray-700 transition-colors group"
+              className="flex flex-col sm:flex-row items-start sm:items-center gap-4 p-4 bg-[#0B1017] rounded-lg border border-gray-800 hover:border-gray-700 transition-colors group"
             >
-              <span className="font-mono text-sm text-gray-300/90 truncate flex-1" title={txid}>
-                {truncateAddress(txid, 48)}
-              </span>
-              <Copy className="w-4 h-4 text-gray-500 group-hover:text-gray-400" />
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 mb-2 sm:mb-0">
+                  <span 
+                    className="font-mono text-sm text-orange-500 group-hover:text-orange-400 break-all"
+                    style={{
+                      wordBreak: 'break-word',
+                      overflowWrap: 'break-word'
+                    }}
+                  >
+                    {txid}
+                  </span>
+                  <Copy className="w-4 h-4 text-gray-500 group-hover:text-gray-400" />
+                </div>
+              </div>
+              
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4 sm:ml-auto">
+                <div className="flex items-center gap-2 bg-[#0E141B] px-3 py-1.5 rounded-lg border border-green-800/30">
+                  <DollarSign className="w-3.5 h-3.5 text-green-400" />
+                  <span className="text-green-400 text-xs whitespace-nowrap">
+                    {formatBitcoinValue(data.values[index])} BTC
+                  </span>
+                </div>
+
+                <div className="flex items-center gap-2 bg-[#0E141B] px-3 py-1.5 rounded-lg border border-blue-800/30">
+                  <Calendar className="w-3.5 h-3.5 text-blue-400" />
+                  <span className="text-blue-400 text-xs whitespace-nowrap">
+                    {new Date(data.timestamps[index] * 1000).toLocaleString()}
+                  </span>
+                </div>
+
+                <div className="flex items-center gap-2 text-gray-400 group-hover:text-gray-300">
+                  <span>Details</span>
+                  <ArrowRight className="w-4 h-4" />
+                </div>
+              </div>
             </Link>
           ))}
         </div>
