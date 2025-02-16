@@ -7,6 +7,9 @@ WORKDIR /app
 # Copy package files
 COPY package*.json ./
 
+# copy dataset links download file
+COPY /src/public/dataset_links.json ./
+
 # Install dependencies
 RUN npm install
 
@@ -25,8 +28,7 @@ WORKDIR /usr/share/nginx/html
 # Remove default nginx static files
 RUN rm -rf ./*
 
-# copy dataset links download file
-COPY /app/public/dataset_links.json ./
+
 
 # Copy built files from the first stage
 COPY --from=build /app/dist/ ./
