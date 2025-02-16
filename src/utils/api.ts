@@ -44,17 +44,68 @@ const retryRequest = async <T>(fn: () => Promise<T>, retries = MAX_RETRIES): Pro
   }
 };
 
-export const fetchAddressInfo = async (address: string, page = 1): Promise<AddressResponse> => {
+export const fetchAddressInfo = async (address: string): Promise<AddressResponse> => {
   try {
     const response = await retryRequest(() => 
-      axiosInstance.get(`/address/${address}`, {
-        params: { page },
+      axiosInstance.get(`/address/${address}?details=txs`, {
         headers: {
           'User-Agent': getRandomUserAgent()
         }
       })
     );
-    return response.data;
+
+    const data = response.data;
+    
+    // Process transactions to get accurate values and timestamps
+    const processedTransactions = (data.transactions || []).map((tx: any) => {
+      let value = '0';
+      
+      // Calculate the actual value for this transaction
+      if (tx.vout && Array.isArray(tx.vout)) {
+        const isFromThisAddress = tx.vin?.some((input: any) => 
+          input.addresses?.includes(address)
+        );
+        
+        if (isFromThisAddress) {
+          // Sum all outputs for outgoing transactions
+          value = tx.vout.reduce((sum: number, output: any) => 
+            sum + (parseFloat(output.value) || 0), 0).toString();
+        } else {
+          // Sum only outputs to this address for incoming transactions
+          value = tx.vout.reduce((sum: number, output: any) => {
+            if (output.addresses?.includes(address)) {
+              return sum + (parseFloat(output.value) || 0);
+            }
+            return sum;
+          }, 0).toString();
+        }
+      }
+
+      // Ensure we have a valid timestamp
+      const timestamp = tx.blockTime || tx.time || Math.floor(Date.now() / 1000);
+
+      return {
+        txid: tx.txid,
+        value: value,
+        timestamp: timestamp
+      };
+    });
+
+    // Sort transactions by timestamp in descending order (newest first)
+    processedTransactions.sort((a, b) => b.timestamp - a.timestamp);
+
+    return {
+      address: data.address,
+      balance: data.balance || '0',
+      totalReceived: data.totalReceived || '0',
+      totalSent: data.totalSent || '0',
+      unconfirmedBalance: data.unconfirmedBalance || '0',
+      unconfirmedTxs: data.unconfirmedTxs || 0,
+      txs: data.txs || 0,
+      txids: processedTransactions.map(tx => tx.txid),
+      values: processedTransactions.map(tx => tx.value),
+      timestamps: processedTransactions.map(tx => tx.timestamp)
+    };
   } catch (error) {
     if (axios.isAxiosError(error)) {
       const errorMessage = error.response?.data?.message || error.message;
@@ -73,7 +124,30 @@ export const fetchTransactionInfo = async (txid: string): Promise<TransactionRes
         }
       })
     );
-    return response.data;
+    
+    const data = response.data;
+
+    // Calculate the total transaction value
+    const totalValue = data.vout?.reduce((sum: number, output: any) => 
+      sum + (parseFloat(output.value) || 0), 0).toString() || '0';
+
+    return {
+      txid: data.txid,
+      blockHeight: data.blockHeight || 0,
+      blockTime: data.blockTime || Math.floor(Date.now() / 1000),
+      confirmations: data.confirmations || 0,
+      fees: data.fees || '0',
+      size: data.size || 0,
+      value: totalValue,
+      vin: (data.vin || []).map((input: any) => ({
+        addresses: input.addresses || [],
+        value: input.value || '0'
+      })),
+      vout: (data.vout || []).map((output: any) => ({
+        addresses: output.addresses || [],
+        value: output.value || '0'
+      }))
+    };
   } catch (error) {
     if (axios.isAxiosError(error)) {
       const errorMessage = error.response?.data?.message || error.message;
@@ -85,31 +159,43 @@ export const fetchTransactionInfo = async (txid: string): Promise<TransactionRes
 
 export const fetchBitcoinPrice = async (): Promise<BitcoinPrice> => {
   try {
-    const response = await axios.get('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd&include_24hr_change=true');
+    const response = await axios.get('https://api.coingecko.com/api/v3/simple/price', {
+      params: {
+        ids: 'bitcoin',
+        vs_currencies: 'usd',
+        include_24hr_change: true
+      }
+    });
     
     return {
       USD: {
-        last: response.data.bitcoin.usd,
+        last: response.data.bitcoin.usd || 0,
         symbol: '$',
-        change_24h: response.data.bitcoin.usd_24h_change
+        change_24h: response.data.bitcoin.usd_24h_change || 0
       }
     };
   } catch (error) {
-    console.error('Error fetching Bitcoin price:', error);
-    throw error;
+    return {
+      USD: {
+        last: 0,
+        symbol: '$',
+        change_24h: 0
+      }
+    };
   }
 };
 
 export const fetchLiveTransactions = async (): Promise<LiveTransaction[]> => {
   try {
     const response = await axios.get('https://blockchain.info/unconfirmed-transactions?format=json');
-    return response.data.txs;
+    return response.data.txs || [];
   } catch (error) {
     console.error('Error fetching live transactions:', error);
-    throw error;
+    return [];
   }
 };
 
-export const formatBitcoinValue = (value: string): string => {
-  return (Number(value) / 100000000).toFixed(8);
+export const formatBitcoinValue = (value: string | number): string => {
+  const numValue = typeof value === 'string' ? parseFloat(value) : value;
+  return (numValue / 100000000).toFixed(8);
 };
