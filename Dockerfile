@@ -29,7 +29,7 @@ RUN rm -rf ./*
 COPY --from=build /app/dist/ ./
 
 # copy dataset links download file
-COPY dataset_links.json ./
+COPY public/dataset_links.json ./
 
 # Expose port 80
 EXPOSE 80
