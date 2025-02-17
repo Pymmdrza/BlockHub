@@ -1,7 +1,14 @@
+// Bitcoin price types
+export interface BitcoinPrice {
+  USD: {
+    last: number;
+    symbol: string;
+    change_24h: number;
+  };
+}
+
+// Address types
 export interface AddressResponse {
-  page: number;
-  totalPages: number;
-  itemsOnPage: number;
   address: string;
   balance: string;
   totalReceived: string;
@@ -10,8 +17,30 @@ export interface AddressResponse {
   unconfirmedTxs: number;
   txs: number;
   txids: string[];
+  values: string[];
+  timestamps: number[];
 }
 
+// Transaction types
+export interface TransactionResponse {
+  txid: string;
+  blockHeight: number;
+  blockTime: number;
+  confirmations: number;
+  fees: string;
+  size: number;
+  value: string;
+  vin: Array<{
+    addresses: string[];
+    value: string;
+  }>;
+  vout: Array<{
+    addresses: string[];
+    value: string;
+  }>;
+}
+
+// Transaction Input
 export interface TransactionVin {
   txid: string;
   vout: number;
@@ -22,6 +51,7 @@ export interface TransactionVin {
   value: string;
 }
 
+// Transaction Output
 export interface TransactionVout {
   value: string;
   n: number;
@@ -30,6 +60,7 @@ export interface TransactionVout {
   isAddress: boolean;
 }
 
+// Transaction Response
 export interface TransactionResponse {
   txid: string;
   version: number;
@@ -48,6 +79,7 @@ export interface TransactionResponse {
   hex: string;
 }
 
+// Live transaction types
 export interface LiveTransaction {
   hash: string;
   time: number;
