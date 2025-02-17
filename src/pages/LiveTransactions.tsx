@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { fetchLiveTransactions } from '../utils/api';
 import { truncateAddress } from '../utils/format';
 import { LiveTransaction } from '../types';
-import { Activity, ArrowLeft, ArrowRight, Copy, Filter } from 'lucide-react';
+import { Activity, ArrowLeft, ArrowRight, Copy, Filter, Clock, DollarSign } from 'lucide-react';
 
 export const LiveTransactions: React.FC = () => {
   const [transactions, setTransactions] = useState<LiveTransaction[]>([]);
@@ -107,92 +107,115 @@ export const LiveTransactions: React.FC = () => {
       </div>
 
       <div className="space-y-4">
-        {filteredTransactions.map((tx) => (
-          <div
-            key={tx.hash}
-            className="bg-[#0E141B] rounded-lg p-4 border border-gray-800 animate-fade-in"
-          >
-            <div className="flex flex-col gap-4">
-              <div className="flex items-center justify-between border-b border-gray-800 pb-4">
-                <div className="flex items-center gap-2 min-w-0 max-w-full">
-                  <span className="font-mono text-orange-500 text-sm truncate" title={tx.hash}>
-                    {truncateAddress(tx.hash, 32)}
-                  </span>
-                  <button 
-                    onClick={() => copyToClipboard(tx.hash)}
-                    className="p-1 hover:bg-gray-800 rounded flex-shrink-0"
-                    title="Copy transaction ID"
-                  >
-                    <Copy className="w-4 h-4" />
-                  </button>
+        {filteredTransactions.map((tx) => {
+          const totalValue = getTotalValue(tx);
+          return (
+            <div
+              key={tx.hash}
+              className="bg-[#0E141B] rounded-lg p-4 border border-gray-800 animate-fade-in hover:border-gray-700 transition-all"
+            >
+              <div className="flex flex-col gap-4">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-gray-800 pb-4 gap-3">
+                  <div className="flex items-center gap-2 min-w-0 flex-1">
+                    <Link
+                      to={`/tx/${tx.hash}`}
+                      className="font-mono text-orange-500 hover:text-orange-400 transition-colors text-sm break-all"
+                      style={{
+                        wordBreak: 'break-word',
+                        overflowWrap: 'break-word'
+                      }}
+                    >
+                      {tx.hash}
+                    </Link>
+                    <button 
+                      onClick={() => copyToClipboard(tx.hash)}
+                      className="p-1 hover:bg-gray-800 rounded flex-shrink-0"
+                      title="Copy transaction ID"
+                    >
+                      <Copy className="w-4 h-4" />
+                    </button>
+                  </div>
+                  <div className="flex items-center gap-4 flex-shrink-0">
+                    <div className="flex items-center gap-2 bg-green-900/20 px-3 py-1.5 rounded-lg border border-green-800/30">
+                      <DollarSign className="w-4 h-4 text-green-400" />
+                      <span className="text-green-400 font-medium">
+                        {totalValue.toFixed(8)} BTC
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2 text-gray-400">
+                      <Clock className="w-4 h-4" />
+                      <span className="text-sm whitespace-nowrap">
+                        {formatTime(tx.time)}
+                      </span>
+                    </div>
+                  </div>
                 </div>
-                <span className="text-sm text-gray-400 flex-shrink-0 ml-4">
-                  {formatTime(tx.time)}
-                </span>
-              </div>
 
-              <div className="grid grid-cols-1 lg:grid-cols-[1fr,auto,1fr] gap-4">
-                <div className="bg-[#0B1017] rounded-lg border border-gray-800 p-3">
-                  <div className="text-sm text-gray-400 mb-2">From</div>
-                  <div className="space-y-2">
-                    {tx.inputs?.map((input, index) => (
-                      input.prev_out?.addr && (
-                        <div key={index} className="flex items-center justify-between gap-2 min-w-0">
-                          <div className="min-w-0 flex-1">
-                            <div className="truncate">
+                <div className="grid grid-cols-1 lg:grid-cols-[1fr,auto,1fr] gap-4">
+                  <div className="bg-[#0B1017] rounded-lg border border-gray-800 p-3">
+                    <div className="text-sm text-gray-400 mb-2">From</div>
+                    <div className="space-y-2">
+                      {tx.inputs?.map((input, index) => (
+                        input.prev_out?.addr && (
+                          <div key={index} className="flex flex-col sm:flex-row sm:items-center gap-2">
+                            <div className="min-w-0 flex-1">
                               <Link
                                 to={`/address/${input.prev_out.addr}`}
-                                className="text-orange-500 hover:text-orange-400 font-mono text-sm"
-                                title={input.prev_out.addr}
+                                className="text-orange-500 hover:text-orange-400 font-mono text-sm break-all"
+                                style={{
+                                  wordBreak: 'break-word',
+                                  overflowWrap: 'break-word'
+                                }}
                               >
-                                {truncateAddress(input.prev_out.addr, 24)}
+                                {input.prev_out.addr}
                               </Link>
                             </div>
+                            <div className="text-sm text-gray-400 flex-shrink-0 whitespace-nowrap">
+                              {formatValue(input.prev_out.value)} BTC
+                            </div>
                           </div>
-                          <span className="text-sm text-gray-400 flex-shrink-0">
-                            {formatValue(input.prev_out.value)} BTC
-                          </span>
-                        </div>
-                      )
-                    ))}
+                        )
+                      ))}
+                    </div>
                   </div>
-                </div>
 
-                <div className="flex justify-center items-center">
-                  <div className="w-8 h-8 bg-[#0E141B] rounded-full flex items-center justify-center">
-                    <ArrowRight className="w-5 h-5 text-gray-500" />
+                  <div className="flex justify-center items-center">
+                    <div className="w-8 h-8 bg-[#0E141B] rounded-full flex items-center justify-center">
+                      <ArrowRight className="w-5 h-5 text-gray-500" />
+                    </div>
                   </div>
-                </div>
 
-                <div className="bg-[#0B1017] rounded-lg border border-gray-800 p-3">
-                  <div className="text-sm text-gray-400 mb-2">To</div>
-                  <div className="space-y-2">
-                    {tx.out.map((output, index) => (
-                      output.addr && (
-                        <div key={index} className="flex items-center justify-between gap-2 min-w-0">
-                          <div className="min-w-0 flex-1">
-                            <div className="truncate">
+                  <div className="bg-[#0B1017] rounded-lg border border-gray-800 p-3">
+                    <div className="text-sm text-gray-400 mb-2">To</div>
+                    <div className="space-y-2">
+                      {tx.out.map((output, index) => (
+                        output.addr && (
+                          <div key={index} className="flex flex-col sm:flex-row sm:items-center gap-2">
+                            <div className="min-w-0 flex-1">
                               <Link
                                 to={`/address/${output.addr}`}
-                                className="text-green-500 hover:text-green-400 font-mono text-sm"
-                                title={output.addr}
+                                className="text-green-500 hover:text-green-400 font-mono text-sm break-all"
+                                style={{
+                                  wordBreak: 'break-word',
+                                  overflowWrap: 'break-word'
+                                }}
                               >
-                                {truncateAddress(output.addr, 24)}
+                                {output.addr}
                               </Link>
                             </div>
+                            <div className="text-sm text-gray-400 flex-shrink-0 whitespace-nowrap">
+                              {formatValue(output.value)} BTC
+                            </div>
                           </div>
-                          <span className="text-sm text-gray-400 flex-shrink-0">
-                            {formatValue(output.value)} BTC
-                          </span>
-                        </div>
-                      )
-                    ))}
+                        )
+                      ))}
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
 
         {filteredTransactions.length === 0 && (
           <div className="bg-[#0E141B] rounded-lg p-6 border border-gray-800 text-center">
