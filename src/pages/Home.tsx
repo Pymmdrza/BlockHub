@@ -53,10 +53,7 @@ export const Home: React.FC = () => {
             </div>
           )}
 
-          <Link 
-            to="/live" 
-            className="bg-[#0E141B] rounded-lg p-6 border border-gray-800 hover:border-gray-700 transition-colors group"
-          >
+          <Link to="/live" className="bg-[#0E141B] rounded-lg p-6 border border-gray-800 hover:border-gray-700 transition-colors group">
             <div className="flex items-center gap-3 mb-4">
               <Activity className="w-6 h-6 text-blue-500 group-hover:text-blue-400" />
               <h2 className="text-xl font-bold text-white">Live Transactions</h2>
