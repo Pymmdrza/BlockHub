@@ -19,7 +19,7 @@ export default defineConfig({
   },
   publicDir: 'public',
   server: {
-    port: 3000, // Set port to match Dockerfile
-    host: true, // Ensure external access in Docker
+    port: 3000,
+    host: true,
   },
 });
