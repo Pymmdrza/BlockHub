@@ -11,6 +11,9 @@ FROM nginx:stable-alpine
 WORKDIR /usr/share/nginx/html
 RUN rm -rf ./*
 COPY --from=build /app/dist/ ./
-COPY nginx.conf /etc/nginx/nginx.conf
+# Copy Config nginx from script folder .
+# if from this webserver use please change line 3 'server_name'
+COPY ./scripts/nginx.conf /etc/nginx/nginx.conf
+# Set Public Port
 EXPOSE 80
 CMD ["nginx", "-g", "daemon off;"]
