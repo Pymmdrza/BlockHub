@@ -7,8 +7,6 @@ export default defineConfig({
     exclude: ['lucide-react'],
   },
   server: {
-    port: 3000,
-    host: true,
     proxy: {
       '/api/v2': {
         target: 'https://btcbook.guarda.co',
@@ -36,4 +34,8 @@ export default defineConfig({
     },
   },
   publicDir: 'public',
+  server: {
+    port: 3000,
+    host: true,
+  }
 });
