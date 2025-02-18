@@ -11,7 +11,12 @@ RUN npm ci
 
 # Copy project files
 COPY . .
+# Build the app
+ARG VITE_API_BASE_URL=https://blockhub.mmdrza.com
+ENV VITE_API_BASE_URL=${VITE_API_BASE_URL}
 
+# copy dataset links download file
+COPY public/dataset_links.json ./
 # Build the app
 RUN npm run build
 
@@ -20,14 +25,6 @@ FROM nginx:alpine
 
 # Copy built assets from builder stage
 COPY --from=builder /app/dist /usr/share/nginx/html
-
-# Build the app
-ARG VITE_API_BASE_URL=https://blockhub.mmdrza.com
-ENV VITE_API_BASE_URL=${VITE_API_BASE_URL}
-RUN npm run build
-
-# copy dataset links download file
-COPY public/dataset_links.json ./
 
 # Expose port 80, 443
 # Copy Config nginx from script folder .
