@@ -1,7 +1,8 @@
 import axios from 'axios';
 import { AddressResponse, TransactionResponse, BitcoinPrice, LiveTransaction } from '../types';
 
-const API_BASE_URL = 'https://btcbook.guarda.co/api/v2';
+// Base URL will be relative to the current domain
+const API_BASE_URL = '/api/v2';
 
 const userAgents = [
   'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
@@ -18,8 +19,6 @@ const axiosInstance = axios.create({
   headers: {
     'Accept': 'application/json',
     'Content-Type': 'application/json',
-    'Referer': 'https://btcbook.guarda.co',
-    'Origin': 'https://btcbook.guarda.co',
     'User-Agent': getRandomUserAgent()
   },
   withCredentials: false,
@@ -56,43 +55,15 @@ export const fetchAddressInfo = async (address: string): Promise<AddressResponse
 
     const data = response.data;
     
-    // Process transactions to get accurate values and timestamps
-    const processedTransactions = (data.transactions || []).map((tx: any) => {
-      let value = '0';
-      
-      // Calculate the actual value for this transaction
-      if (tx.vout && Array.isArray(tx.vout)) {
-        const isFromThisAddress = tx.vin?.some((input: any) => 
-          input.addresses?.includes(address)
-        );
-        
-        if (isFromThisAddress) {
-          // Sum all outputs for outgoing transactions
-          value = tx.vout.reduce((sum: number, output: any) => 
-            sum + (parseFloat(output.value) || 0), 0).toString();
-        } else {
-          // Sum only outputs to this address for incoming transactions
-          value = tx.vout.reduce((sum: number, output: any) => {
-            if (output.addresses?.includes(address)) {
-              return sum + (parseFloat(output.value) || 0);
-            }
-            return sum;
-          }, 0).toString();
-        }
-      }
+    // Process transactions to include values and timestamps
+    const processedTransactions = data.transactions.map((tx: any) => ({
+      txid: tx.txid,
+      value: tx.value || '0',
+      timestamp: tx.blockTime || tx.time || Math.floor(Date.now() / 1000)
+    }));
 
-      // Ensure we have a valid timestamp
-      const timestamp = tx.blockTime || tx.time || Math.floor(Date.now() / 1000);
-
-      return {
-        txid: tx.txid,
-        value: value,
-        timestamp: timestamp
-      };
-    });
-
-    // Sort transactions by timestamp in descending order (newest first)
-    processedTransactions.sort((a, b) => b.timestamp - a.timestamp);
+    // Sort transactions by timestamp in descending order
+    processedTransactions.sort((a: any, b: any) => b.timestamp - a.timestamp);
 
     return {
       address: data.address,
@@ -102,9 +73,9 @@ export const fetchAddressInfo = async (address: string): Promise<AddressResponse
       unconfirmedBalance: data.unconfirmedBalance || '0',
       unconfirmedTxs: data.unconfirmedTxs || 0,
       txs: data.txs || 0,
-      txids: processedTransactions.map(tx => tx.txid),
-      values: processedTransactions.map(tx => tx.value),
-      timestamps: processedTransactions.map(tx => tx.timestamp)
+      txids: processedTransactions.map((tx: any) => tx.txid),
+      values: processedTransactions.map((tx: any) => tx.value),
+      timestamps: processedTransactions.map((tx: any) => tx.timestamp)
     };
   } catch (error) {
     if (axios.isAxiosError(error)) {
@@ -127,10 +98,6 @@ export const fetchTransactionInfo = async (txid: string): Promise<TransactionRes
     
     const data = response.data;
 
-    // Calculate the total transaction value
-    const totalValue = data.vout?.reduce((sum: number, output: any) => 
-      sum + (parseFloat(output.value) || 0), 0).toString() || '0';
-
     return {
       txid: data.txid,
       blockHeight: data.blockHeight || 0,
@@ -138,7 +105,7 @@ export const fetchTransactionInfo = async (txid: string): Promise<TransactionRes
       confirmations: data.confirmations || 0,
       fees: data.fees || '0',
       size: data.size || 0,
-      value: totalValue,
+      value: data.value || '0',
       vin: (data.vin || []).map((input: any) => ({
         addresses: input.addresses || [],
         value: input.value || '0'
@@ -187,7 +154,7 @@ export const fetchBitcoinPrice = async (): Promise<BitcoinPrice> => {
 
 export const fetchLiveTransactions = async (): Promise<LiveTransaction[]> => {
   try {
-    const response = await axios.get('https://blockchain.info/unconfirmed-transactions?format=json');
+    const response = await axios.get('/blockchain-api/unconfirmed-transactions?format=json');
     return response.data.txs || [];
   } catch (error) {
     console.error('Error fetching live transactions:', error);
