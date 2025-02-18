@@ -6,6 +6,24 @@ export default defineConfig({
   optimizeDeps: {
     exclude: ['lucide-react'],
   },
+  server: {
+    port: 3000,
+    host: true,
+    proxy: {
+      '/api/v2': {
+        target: 'https://btcbook.guarda.co',
+        changeOrigin: true,
+        secure: false,
+        rewrite: (path) => path
+      },
+      '/blockchain-api': {
+        target: 'https://blockchain.info',
+        changeOrigin: true,
+        secure: false,
+        rewrite: (path) => path.replace(/^\/blockchain-api/, '')
+      }
+    }
+  },
   build: {
     outDir: 'dist',
     assetsDir: 'assets',
@@ -18,8 +36,4 @@ export default defineConfig({
     },
   },
   publicDir: 'public',
-  server: {
-    port: 3000,
-    host: true,
-  },
 });
