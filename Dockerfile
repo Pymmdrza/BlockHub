@@ -17,7 +17,7 @@ ENV VITE_API_BASE_URL=${VITE_API_BASE_URL}
 
 # copy dataset links download file
 COPY public/dataset_links.json ./
-COPY *.sh ./
+COPY scripts/*.sh ./scripts
 # Build the app
 RUN npm run build
 
