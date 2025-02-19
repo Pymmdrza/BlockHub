@@ -11,15 +11,13 @@ services:
       - "80:80"
       - "443:443"
     volumes:
-      - ./scripts/nginx.conf:/etc/nginx/templates/default.conf.template:ro
+      - ./nginx.conf:/etc/nginx/templates/default.conf.template:ro
       - certbot-etc:/etc/letsencrypt
       - certbot-var:/var/lib/letsencrypt
       - webroot:/var/www/certbot
-    environment:
-      - DOMAIN=${DOMAIN:-localhost}
-      - ADMIN_EMAIL=${ADMIN_EMAIL:-admin@localhost}
-      - USE_SSL=${USE_SSL:-true}
-      - VITE_API_BASE_URL=${VITE_API_BASE_URL:-/api/v2}
+    # Load environment variables from .env.example
+    env_file:
+      - .env.example
     networks:
       - blockhub_network
 
