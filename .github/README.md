@@ -25,30 +25,96 @@ Backend Service for index Bitcoin Address Wallet and index Transaction , Index B
 > First Change and Replace Your Domain or Sub domain + Email on `.env` [Here](../.env)
 
 
-### Docker
+# BlockHub - Bitcoin Explorer
 
-```shell
-docker pull pymmdrza/blockhub:latest
-```
+A modern, real-time Bitcoin blockchain explorer built with React and TypeScript.
 
-or 
+## Quick Start with Docker
 
-```shell
-git clone https://github.com/PyMmdrza/BlockHub
-cd BlockHub
+The easiest way to run BlockHub is using Docker. Make sure you have [Docker](https://docs.docker.com/get-docker/) and [Docker Compose](https://docs.docker.com/compose/install/) installed on your system.
 
-```
+### One-Command Setup (Recommended)
 
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/Pymmdrza/BlockHub.git
+   cd BlockHub
+   ```
 
-### Git 
+2. Run the setup command:
+   ```bash
+   make init
+   ```
+   This will:
+   - Create a `.env` file from `.env.example`
+   - Make all scripts executable
+   - Install dependencies
+   - Set up the environment
 
-install and running with `git`
+3. Update the `.env` file with your settings:
+   ```env
+   DOMAIN=your-domain.com
+   ADMIN_EMAIL=your-email@domain.com
+   USE_SSL=true
+   ```
 
-```shell
-git clone https://github.com/Pymmdrza/BlockHub.git
-cd BlockHub
-chmod +x setup.sh
-./setup.sh
-```
+4. Start the application:
+   ```bash
+   make deploy
+   ```
 
+### Manual Setup
+
+If you prefer to set up manually:
+
+1. Copy `.env.example` to `.env`:
+   ```bash
+   cp .env.example .env
+   ```
+
+2. Edit `.env` with your settings
+
+3. Build and start:
+   ```bash
+   docker-compose up -d --build
+   ```
+
+## Available Make Commands
+
+- `make help` - Show all available commands
+- `make init` - Initialize the project
+- `make deploy` - Deploy the application
+- `make docker-logs` - View container logs
+- `make docker-restart` - Restart containers
+- `make docker-clean` - Clean Docker artifacts
+
+## Features
+
+- Real-time Bitcoin price tracking
+- Live transaction monitoring
+- Address balance and transaction history
+- Transaction details and analysis
+- Dark mode optimized interface
+- Responsive design
+
+## Environment Variables
+
+The following environment variables can be configured in your `.env` file:
+
+- `DOMAIN`: Your domain name (e.g., blockhub.example.com)
+- `ADMIN_EMAIL`: Your email address for SSL certificates
+- `USE_SSL`: Set to `true` to enable SSL/HTTPS, `false` otherwise
+- `VITE_API_BASE_URL`: API base URL (default: /api/v2)
+
+## Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
+
+## License
+
+This project is open source and available under the [MIT License](LICENSE).
+
+## Author
+
+[Pymmdrza](https://github.com/Pymmdrza)
 
