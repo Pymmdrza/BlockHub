@@ -49,10 +49,10 @@ main() {
     # Check SSL setting and run appropriate setup
     if check_ssl_setting; then
         echo "Running setup with SSL..."
-        exec ./scripts/setup_with_ssl.sh
+        bash ./scripts/setup_with_ssl.sh
     else
         echo "Running setup without SSL..."
-        exec ./scripts/setup_without_ssl.sh
+        bash ./scripts/setup_without_ssl.sh
     fi
 }
 
