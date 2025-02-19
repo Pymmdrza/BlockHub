@@ -1,7 +1,8 @@
 import axios from 'axios';
 import { AddressResponse, TransactionResponse, BitcoinPrice, LiveTransaction } from '../types';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api/v2';
+// Base URL will be relative to the current domain
+const API_BASE_URL = '/api/v2';
 
 const userAgents = [
   'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
