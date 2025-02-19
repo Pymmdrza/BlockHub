@@ -16,9 +16,11 @@ services:
       - certbot-var:/var/lib/letsencrypt
       - webroot:/var/www/certbot
     environment:
-      - DOMAIN=${DOMAIN}
-      - ADMIN_EMAIL=${ADMIN_EMAIL}
-      - USE_SSL=${USE_SSL}
+      - DOMAIN=${DOMAIN:-blockhub.mmdrza.com}
+      - ADMIN_EMAIL=${ADMIN_EMAIL:-info@mmdrza.com}
+      - USE_SSL=${USE_SSL:-true}
+      # setup - no changed
+      - NODE_ENV=production
     networks:
       - blockhub_network
 
