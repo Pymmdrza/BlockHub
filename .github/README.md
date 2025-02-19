@@ -19,11 +19,26 @@ Backend Service for index Bitcoin Address Wallet and index Transaction , Index B
 
 ## Install and usage
 
-### install & Running
+## install & Running
+
+> [!NOTE]
+> First Change and Replace Your Domain or Sub domain + Email on `.env` [Here](../.env)
+
+
+### Docker
 
 ```shell
-curl -sSL https://blockhub.mmdrza.com/setup.sh | sh
+docker pull pymmdrza/blockhub:latest
 ```
+
+or 
+
+```shell
+git clone https://github.com/PyMmdrza/BlockHub
+cd BlockHub
+
+```
+
 
 ### Git 
 
