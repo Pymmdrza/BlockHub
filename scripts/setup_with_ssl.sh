@@ -1,15 +1,10 @@
 #!/bin/bash
-
-# Set error handling
 set -e
-
-# Load environment variables
-source .env
 
 # Function to validate domain
 validate_domain() {
     if [[ -z "$DOMAIN" ]]; then
-        echo "Error: DOMAIN is not set in .env file"
+        echo "Error: DOMAIN is not set"
         exit 1
     fi
 }
@@ -17,7 +12,7 @@ validate_domain() {
 # Function to validate email
 validate_email() {
     if [[ -z "$ADMIN_EMAIL" ]]; then
-        echo "Error: ADMIN_EMAIL is not set in .env file"
+        echo "Error: ADMIN_EMAIL is not set"
         exit 1
     fi
 }
@@ -28,6 +23,15 @@ check_certbot() {
         echo "Error: certbot is not installed"
         exit 1
     fi
+}
+
+# Function to wait for nginx to be ready
+wait_for_nginx() {
+    echo "Waiting for Nginx to be ready..."
+    while ! nc -z localhost 80; do
+        sleep 1
+    done
+    echo "Nginx is ready"
 }
 
 # Function to obtain SSL certificate
@@ -43,8 +47,14 @@ obtain_ssl() {
 
 # Function to configure Nginx
 configure_nginx() {
-    echo "Configuring Nginx..."
+    echo "Configuring Nginx with SSL..."
     envsubst '${DOMAIN}' < /etc/nginx/templates/default.conf.template > /etc/nginx/conf.d/default.conf
+}
+
+# Function to setup auto-renewal
+setup_auto_renewal() {
+    echo "Setting up SSL auto-renewal..."
+    echo "0 0 * * * certbot renew --quiet" | crontab -
 }
 
 # Main setup function
@@ -64,6 +74,9 @@ main() {
     
     # Configure nginx
     configure_nginx
+    
+    # Setup auto-renewal
+    setup_auto_renewal
     
     # Start nginx
     echo "Starting Nginx..."
