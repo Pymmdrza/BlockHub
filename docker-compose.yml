@@ -11,16 +11,15 @@ services:
       - "80:80"
       - "443:443"
     volumes:
-      - ./nginx.conf:/etc/nginx/templates/default.conf.template:ro
+      - ./scripts/nginx.conf:/etc/nginx/templates/default.conf.template:ro
       - certbot-etc:/etc/letsencrypt
       - certbot-var:/var/lib/letsencrypt
       - webroot:/var/www/certbot
     environment:
-      - DOMAIN=${DOMAIN:-blockhub.mmdrza.com}
-      - ADMIN_EMAIL=${ADMIN_EMAIL:-info@mmdrza.com}
+      - DOMAIN=${DOMAIN:-localhost}
+      - ADMIN_EMAIL=${ADMIN_EMAIL:-admin@localhost}
       - USE_SSL=${USE_SSL:-true}
-      # setup - no changed
-      - NODE_ENV=production
+      - VITE_API_BASE_URL=${VITE_API_BASE_URL:-/api/v2}
     networks:
       - blockhub_network
 
