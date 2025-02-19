@@ -18,11 +18,12 @@ FROM nginx:alpine
 # Copy built files from the builder stage to Nginx's html folder
 COPY --from=builder /app/dist /usr/share/nginx/html
 
-# Copy the Nginx configuration template and entrypoint script
-COPY scripts/nginx.conf /etc/nginx/templates/default.conf.template
+# Copy the Nginx configuration template from the local nginx-templates directory
+# (This copy will be overridden by the volume mount in docker-compose if provided)
+COPY nginx-templates/default.conf.template /etc/nginx/templates/default.conf.template
+
+# Copy the entrypoint script and ensure it is executable
 COPY docker-entrypoint.sh /docker-entrypoint.sh
-COPY public/dataset_links.json /dataset_links.json
-# Ensure the entrypoint script is executable
 RUN chmod +x /docker-entrypoint.sh
 
 # Use the custom entrypoint script to start Nginx
