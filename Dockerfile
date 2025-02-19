@@ -1,7 +1,7 @@
 # Stage 1: Build the application using Node.js
 FROM node:18-alpine AS builder
 WORKDIR /app
-
+ENV NODE_ENV=production
 # Copy package files and install dependencies
 COPY package*.json ./
 RUN npm install
