@@ -1,0 +1,32 @@
+version: '3.8'
+
+services:
+  blockhub:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: blockhub
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/templates/default.conf.template:ro
+      - certbot-etc:/etc/letsencrypt
+      - certbot-var:/var/lib/letsencrypt
+      - webroot:/var/www/certbot
+    environment:
+      - DOMAIN=${DOMAIN}
+      - ADMIN_EMAIL=${ADMIN_EMAIL}
+      - USE_SSL=${USE_SSL}
+    networks:
+      - blockhub_network
+
+volumes:
+  certbot-etc:
+  certbot-var:
+  webroot:
+
+networks:
+  blockhub_network:
+    driver: bridge
