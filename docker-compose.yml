@@ -11,7 +11,8 @@ services:
       - "80:80"
       - "443:443"
     volumes:
-      - ./nginx.conf:/etc/nginx/templates/default.conf.template:ro
+      # Mount the nginx configuration templates directory from the host
+      - ./nginx-templates:/etc/nginx/templates:ro
       - certbot-etc:/etc/letsencrypt
       - certbot-var:/var/lib/letsencrypt
       - webroot:/var/www/certbot
