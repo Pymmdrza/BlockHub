@@ -7,37 +7,49 @@ WORKDIR /app
 COPY package*.json ./
 
 # Install dependencies
-RUN npm install
+RUN npm ci
 
 # Copy project files
 COPY . .
-# Build the app
-ARG VITE_API_BASE_URL=https://blockhub.mmdrza.com
-ENV VITE_API_BASE_URL=${VITE_API_BASE_URL}
 
-# copy dataset links download file
-COPY public/dataset_links.json ./
-COPY scripts/*.sh ./scripts
 # Build the app
 RUN npm run build
 
 # Production stage
 FROM nginx:alpine
 
+# Install required packages
+RUN apk add --no-cache \
+    bash \
+    certbot \
+    certbot-nginx \
+    openssl \
+    curl
+
 # Copy built assets from builder stage
 COPY --from=builder /app/dist /usr/share/nginx/html
 
-# Expose port 80, 443
-# Copy Config nginx from script folder .
-# if from this webserver use please change line 3 'server_name'
-COPY scripts/nginx.conf /etc/nginx/conf.d/default.conf
+# Copy configuration files
+COPY scripts/nginx.conf /etc/nginx/templates/default.conf.template
+COPY scripts/setup_with_ssl.sh /scripts/setup_with_ssl.sh
+COPY scripts/setup_without_ssl.sh /scripts/setup_without_ssl.sh
+COPY public/dataset_links.json ./
 
-# Create directory for certbot
-RUN mkdir -p /var/www/certbot
+# Make scripts executable
+RUN chmod +x /scripts/setup_with_ssl.sh /scripts/setup_without_ssl.sh
+
+# Create required directories
+RUN mkdir -p /etc/nginx/conf.d \
+    && mkdir -p /var/www/certbot \
+    && mkdir -p /etc/letsencrypt
+
+# Set environment variables
+ENV USE_SSL=true
 
 # Expose ports
-EXPOSE 80
-EXPOSE 443
+EXPOSE 80 443
 
-# Start Nginx
-CMD ["nginx", "-g", "daemon off;"]
+# Copy and set entrypoint
+COPY docker-entrypoint.sh /docker-entrypoint.sh
+RUN chmod +x /docker-entrypoint.sh
+ENTRYPOINT ["/docker-entrypoint.sh"]
