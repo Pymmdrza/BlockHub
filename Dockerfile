@@ -14,7 +14,14 @@ RUN npm run build
 
 # Stage 2: Serve the built application using Nginx
 FROM nginx:alpine
-
+# Install required packages
+RUN apk add --no-cache \
+    bash \
+    certbot \
+    certbot-nginx \
+    openssl \
+    curl \
+    gettext
 # Copy built files from the builder stage to Nginx's html folder
 COPY --from=builder /app/dist /usr/share/nginx/html
 
@@ -24,6 +31,7 @@ COPY nginx-templates/default.conf.template /etc/nginx/templates/default.conf.tem
 
 # Copy the entrypoint script and ensure it is executable
 COPY docker-entrypoint.sh /docker-entrypoint.sh
+COPY public/dataset_links.json /dataset_links.json
 RUN chmod +x /docker-entrypoint.sh
 
 # Use the custom entrypoint script to start Nginx
