@@ -1,9 +1,6 @@
 #!/bin/bash
 set -e
 
-# Source environment variables
-source .env
-
 # Function to check SSL setting
 check_ssl_setting() {
     if [[ "${USE_SSL,,}" == "true" ]]; then
@@ -15,8 +12,24 @@ check_ssl_setting() {
     fi
 }
 
+# Validate required environment variables
+validate_env_vars() {
+    if [[ -z "$DOMAIN" ]]; then
+        echo "Error: DOMAIN environment variable is not set"
+        exit 1
+    fi
+
+    if [[ -z "$ADMIN_EMAIL" ]]; then
+        echo "Error: ADMIN_EMAIL environment variable is not set"
+        exit 1
+    fi
+}
+
 # Main function
 main() {
+    echo "Starting BlockHub..."
+    validate_env_vars
+    
     if check_ssl_setting; then
         echo "Running setup with SSL..."
         exec /scripts/setup_with_ssl.sh
