@@ -26,7 +26,6 @@ RUN apt update -y \
     && apt-get update -y \
     && apt-get install python-certbot-nginx -y \
     && apt-get install openssl -y
-    && apt-get clean
 
 COPY --from=builder /app/dist /usr/share/nginx/html
 
