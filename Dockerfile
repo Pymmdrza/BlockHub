@@ -11,6 +11,9 @@ RUN npm install
 COPY . .
 COPY public/dataset_links.json ./
 
+# Copy build shell script
+COPY scripts/docker-build.sh ./
+
 # Build the app
 RUN npm run build
 
