@@ -22,6 +22,7 @@ RUN apk add --no-cache \
     openssl \
     curl \
     gettext
+    
 # Copy built files from the builder stage to Nginx's html folder
 COPY --from=builder /app/dist /usr/share/nginx/html
 
