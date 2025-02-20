@@ -12,10 +12,14 @@ services:
       - "443:443"
     environment:
       - NODE_ENV=production
+      - VITE_API_BASE_URL=/api/v2
+      - DOMAIN=blockhub.mmdrza.com
+      - ADMIN_EMAIL=mmdrza@usa.com
     networks:
       - blockhub_network
     volumes:
       - /etc/letsencrypt:/etc/letsencrypt:ro
+
 networks:
   blockhub_network:
     driver: bridge
