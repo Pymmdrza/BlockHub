@@ -9,11 +9,10 @@ WORKDIR /usr/src/blockhub
 # Copy package files and install dependencies
 COPY package*.json ./
 
-RUN npm ci --only=production
+RUN npm install
 
 # Copy project files and dataset_links.json
 COPY . .
-COPY public/dataset_links.json /usr/src/blockhub/public/dataset_links.json
 
 # Build the app
 RUN npm run build
