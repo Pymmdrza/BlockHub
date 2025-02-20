@@ -1,52 +1,46 @@
 # Stage 1: Build Stage
 FROM node:20-alpine AS builder
-STOPSIGNAL SIGTERM
-
-# Create working directory
 WORKDIR /usr/src/blockhub
 
 # Copy package files and install dependencies
 COPY package*.json ./
 RUN npm install
 
-# Copy project files and dataset_links.json
+# Copy entire project and build the app
 COPY . .
-
-# Build the app
 RUN npm run build
 
-# Stage 2: Serve Stage
-FROM debian:11.7-slim
+# Define build arguments with default values (در صورت نیاز می‌توانید این مقادیر را override کنید)
+ARG NODE_ENV=production
+ARG VITE_API_BASE_URL=/api/v2
+ARG DOMAIN=$(PRIMARY_DOMAIN)
+ARG ADMIN_EMAIL=admin@example.com
+ARG DIST_PATH=/usr/src/blockhub/dist
+ARG HTML_PATH=/usr/share/nginx/html
 
-ENV DEBIAN_FRONTEND=noninteractive
+# Set environment variables based on build arguments
+ENV NODE_ENV=${NODE_ENV}
+ENV VITE_API_BASE_URL=${VITE_API_BASE_URL}
+ENV DOMAIN=${DOMAIN}
+ENV ADMIN_EMAIL=${ADMIN_EMAIL}
+ENV DIST_PATH=${DIST_PATH}
+ENV HTML_PATH=${HTML_PATH}
 
-# Install required packages: nginx, certbot, python3-certbot-nginx, openssl
-RUN apt-get update && \
-    apt-get install -y nginx certbot python3-certbot-nginx openssl && \
-    rm -rf /var/lib/apt/lists/*
+# Stage 2: Serve Stage using nginx
+FROM nginx:alpine
 
-# Generate a self-signed certificate (for testing purposes)
-RUN openssl req -x509 -nodes -days 365 \
-    -subj "/C=KE/ST=Nairobi/L=Nairobi/O=Mmdrza.Com Ltd/OU=Portfolio website/CN=blockhub.mmdrza.com" \
-    -newkey rsa:2048 \
-    -keyout /etc/ssl/private/nginx-selfsigned.key \
-    -out /etc/ssl/certs/nginx-selfsigned.crt
+ENV DOMAIN=${DOMAIN}
+ENV HTML_PATH=${HTML_PATH}
 
-# Remove default nginx html content
-RUN rm -rf /usr/share/nginx/html/*
+# Copy the dataset_links.json file from the builder stage into the designated HTML directory
+COPY --from=builder /usr/src/blockhub/public/dataset_links.json ${HTML_PATH}/dataset_links.json
 
-# Copy custom nginx configuration files from the builder stage
-COPY --from=builder /usr/src/blockhub/scripts/configs/nginx.conf /etc/nginx/nginx.conf
-COPY --from=builder /usr/src/blockhub/scripts/configs/nginxconfigs/prox.conf /etc/nginx/prox.conf
-COPY --from=builder /usr/src/blockhub/scripts/configs/nginxconfigs/general.conf /etc/nginx/general.conf
-COPY --from=builder /usr/src/blockhub/scripts/configs/nginxconfigs/security.conf /etc/nginx/security.conf
+# Copy built application files from the builder stage to the HTML directory
+COPY --from=builder ${DIST_PATH} ${HTML_PATH}
 
-# Copy built application files and dataset_links.json to nginx html directory
-COPY --from=builder /usr/src/blockhub/dist /usr/share/nginx/html
-COPY --from=builder /usr/src/blockhub/public/dataset_links.json /usr/share/nginx/html/dataset_links.json
+# Expose port 9000 (users can map it to container's port 80 as desired)
+EXPOSE 9000
 
-# Expose ports 80 and 443
-EXPOSE 80 443
-
-# Start nginx in foreground
+RUN envsubst '$DOMAIN $HTML_PATH' < /etc/nginx/nginx.conf.template > /etc/nginx/nginx.conf
+# Start nginx in the foreground
 CMD ["nginx", "-g", "daemon off;"]
