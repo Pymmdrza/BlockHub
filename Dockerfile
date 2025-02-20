@@ -47,9 +47,9 @@ RUN rm -rf /usr/share/nginx/html/*
 
 
 COPY --from=builder /usr/src/blockhub/scripts/configs/nginx.conf /etc/nginx/nginx.conf
-COPY --from=builder /usr/src/blockhub/scripts/configs/prox.conf /etc/nginx/prox.conf
-COPY --from=builder /usr/src/blockhub/scripts/configs/general.conf /etc/nginx/general.conf
-COPY --from=builder /usr/src/blockhub/scripts/configs/security.conf /etc/nginx/security.conf
+COPY --from=builder /usr/src/blockhub/scripts/configs/nginxconfigs/prox.conf /etc/nginx/prox.conf
+COPY --from=builder /usr/src/blockhub/scripts/configs/nginxconfigs/general.conf /etc/nginx/general.conf
+COPY --from=builder /usr/src/blockhub/scripts/configs/nginxconfigs/security.conf /etc/nginx/security.conf
 COPY --from=builder /usr/src/blockhub/dist /usr/share/nginx/html
 
 COPY --from=builder /usr/src/blockhub/public/dataset_links.json /usr/share/nginx/html/dataset_links.json
