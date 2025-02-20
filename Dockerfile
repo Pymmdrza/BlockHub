@@ -18,7 +18,7 @@ COPY . .
 RUN npm run build
 
 # Stage 2: Serve stage
-FROM nginx:alpine as blockhub
+# FROM nginx:alpine as blockhub
 
 FROM debian:11.7-slim
 
