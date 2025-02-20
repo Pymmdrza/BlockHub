@@ -31,6 +31,7 @@ FROM nginx:alpine
 RUN apk add --no-cache gettext
 ENV DOMAIN=${DOMAIN}
 ENV HTML_PATH=${HTML_PATH}
+ENV DIST_PATH=${DIST_PATH}
 
 # Copy the dataset_links.json file from the builder stage into the designated HTML directory
 COPY --from=builder /usr/src/blockhub/public/dataset_links.json ${HTML_PATH}/dataset_links.json
