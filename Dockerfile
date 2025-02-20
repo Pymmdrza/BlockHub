@@ -41,6 +41,6 @@ COPY --from=builder ${DIST_PATH} ${HTML_PATH}
 # Expose port 9000 (users can map it to container's port 80 as desired)
 EXPOSE 9000
 
-RUN envsubst '$DOMAIN $HTML_PATH' < /etc/nginx/nginx.conf.template > /etc/nginx/nginx.conf
+RUN envsubst '$DOMAIN $HTML_PATH' < /scripts/nginx.conf.template > /etc/nginx/nginx.conf
 # Start nginx in the foreground
 CMD ["nginx", "-g", "daemon off;"]
