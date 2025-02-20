@@ -19,13 +19,8 @@ Backend Service for index Bitcoin Address Wallet and index Transaction , Index B
 
 ## Install and usage
 
-## install & Running
-
 > [!NOTE]
 > First Change and Replace Your Domain or Sub domain + Email on `.env` [Here](../.env)
-
-
-# BlockHub - Bitcoin Explorer
 
 A modern, real-time Bitcoin blockchain explorer built with React and TypeScript.
 
@@ -43,8 +38,9 @@ The easiest way to run BlockHub is using Docker. Make sure you have [Docker](htt
 
 2. Run the setup command:
    ```bash
-   make init
+   docker-compose up --build
    ```
+   
    This will:
    - Create a `.env` file from `.env.example`
    - Make all scripts executable
