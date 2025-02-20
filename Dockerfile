@@ -33,7 +33,7 @@ ENV ADMIN_EMAIL=${ADMIN_EMAIL}
 # Copy built assets from builder stage
 COPY --from=builder /app/dist /usr/share/nginx/html
 
-# Copy nginx configuration template (do not include inline comments in Persian)
+# Copy nginx configuration template
 COPY nginx.conf /etc/nginx/conf.d/default.conf.template
 
 # Create directory for certbot challenges
