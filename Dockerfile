@@ -1,4 +1,4 @@
-# Build stage
+# Stage 1: Build stage
 FROM node:20-alpine AS builder
 
 WORKDIR /app
@@ -11,37 +11,35 @@ RUN npm install
 COPY . .
 COPY public/dataset_links.json ./
 
-# Copy build shell script
-COPY scripts/docker-build.sh ./
-
 # Build the app
 RUN npm run build
 
-# Production stage
-FROM nginx:alpine
+# Stage 2: Serve stage
+FROM ubuntu:22.04 AS build
 
-# Set build-time arguments and environment variables
-ARG VITE_API_BASE_URL=/api/v2
-ENV VITE_API_BASE_URL=${VITE_API_BASE_URL}
+ENV DEBIAN_FRONTEND=noninteractive
 
-ARG DOMAIN=blockhub.mmdrza.com
-ENV DOMAIN=${DOMAIN}
+RUN apt update -y \
+    && apt install nginx -y \
+    && apt-get install software-properties-common -y \
+    && add-apt-repository ppa:certbot/certbot -y \
+    && apt-get update -y \
+    && apt-get install python-certbot-nginx -y \
+    && apt-get install openssl -y
+    && apt-get clean
 
-ARG ADMIN_EMAIL=mmdrza@usa.com
-ENV ADMIN_EMAIL=${ADMIN_EMAIL}
-
-# Copy built assets from builder stage
 COPY --from=builder /app/dist /usr/share/nginx/html
 
-# Copy nginx configuration template
-COPY nginx.conf /etc/nginx/conf.d/default.conf.template
+COPY nginx.conf /etc/nginx/conf.d/default.conf
 
-# Create directory for certbot challenges
-RUN mkdir -p /var/www/certbot
+COPY --from=builder /app/public/dataset_links.json /usr/share/nginx/html/dataset_links.json
 
-# Expose ports
+COPY scripts/entrypoint.sh ./entrypoint.sh
+
+RUN chmod +x ./entrypoint.sh
+
+# Expose port 80 and 443
 EXPOSE 80
 EXPOSE 443
 
-# Substitute environment variables in nginx config and start nginx
-CMD envsubst '$DOMAIN $VITE_API_BASE_URL $ADMIN_EMAIL' < /etc/nginx/conf.d/default.conf.template > /etc/nginx/conf.d/default.conf && nginx -g 'daemon off;'
+CMD ["./entrypoint.sh"]
