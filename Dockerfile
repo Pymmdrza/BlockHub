@@ -28,7 +28,7 @@ ENV HTML_PATH=${HTML_PATH}
 
 # Stage 2: Serve Stage using nginx
 FROM nginx:alpine
-
+RUN apk add --no-cache gettext
 ENV DOMAIN=${DOMAIN}
 ENV HTML_PATH=${HTML_PATH}
 
