@@ -28,7 +28,7 @@ ENV HTML_PATH=${HTML_PATH}
 
 # Stage 2: Serve Stage using nginx
 FROM nginx:alpine
-
+RUN apk add --no-cache gettext
 ENV DOMAIN=${DOMAIN}
 ENV HTML_PATH=${HTML_PATH}
 
@@ -41,6 +41,6 @@ COPY --from=builder ${DIST_PATH} ${HTML_PATH}
 # Expose port 9000 (users can map it to container's port 80 as desired)
 EXPOSE 9000
 
-RUN envsubst '$DOMAIN $HTML_PATH' < scripts/nginx.conf > /etc/nginx/nginx.conf
+RUN envsubst '$DOMAIN $HTML_PATH' < /usr/src/blockhub/scripts/nginx.conf.template > /etc/nginx/nginx.conf
 # Start nginx in the foreground
 CMD ["nginx", "-g", "daemon off;"]
