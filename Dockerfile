@@ -1,39 +1,35 @@
-# Stage 1: Build the application using Node.js
-FROM node:18-alpine AS builder
+# Build stage
+FROM node:20-alpine AS builder
+
 WORKDIR /app
-ENV NODE_ENV=production
-# Copy package files and install dependencies
+
+# Copy package files
 COPY package*.json ./
+
+# Install dependencies
 RUN npm install
 
-# Copy the rest of the application code
+# Copy project files
 COPY . .
 
-# Build the application (assuming Vite is used)
+# Build the app
 RUN npm run build
 
-# Stage 2: Serve the built application using Nginx
+# Production stage
 FROM nginx:alpine
-# Install required packages
-RUN apk add --no-cache \
-    bash \
-    certbot \
-    certbot-nginx \
-    openssl \
-    curl \
-    gettext
-    
-# Copy built files from the builder stage to Nginx's html folder
+
+# Copy built assets from builder stage
 COPY --from=builder /app/dist /usr/share/nginx/html
+COPY public/dataset_links.json ./dataset_links.json
+# Copy nginx configuration
+COPY nginx.conf /etc/nginx/conf.d/default.conf
 
-# Copy the Nginx configuration template from the local nginx-templates directory
-# (This copy will be overridden by the volume mount in docker-compose if provided)
-COPY nginx-templates/default.conf.template /etc/nginx/templates/default.conf.template
+# Create directory for certbot
+RUN mkdir -p /var/www/certbot
 
-# Copy the entrypoint script and ensure it is executable
-COPY docker-entrypoint.sh /docker-entrypoint.sh
-COPY public/dataset_links.json /dataset_links.json
-RUN chmod +x /docker-entrypoint.sh
+# Expose ports
+EXPOSE 80
+EXPOSE 443
 
-# Use the custom entrypoint script to start Nginx
-ENTRYPOINT ["/docker-entrypoint.sh"]
+# Start Nginx
+CMD ["nginx", "-g", "daemon off;"]
