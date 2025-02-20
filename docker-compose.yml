@@ -6,6 +6,9 @@ services:
       context: .
       dockerfile: Dockerfile
     container_name: blockhub
+    image: blockhub_v1
+    hostname: blockhub_host
+
     restart: unless-stopped
     ports:
       - "80:80"
@@ -13,12 +16,13 @@ services:
     environment:
       - NODE_ENV=production
       - VITE_API_BASE_URL=/api/v2
-      - DOMAIN=steady-brandise-mmdrza-f44e8609.koyeb.app
+      - DOMAIN=blockhub.mmdrza.com
       - ADMIN_EMAIL=mmdrza@usa.com
     networks:
       - blockhub_network
+
     volumes:
-      - /etc/letsencrypt:/etc/letsencrypt:rw
+      - blockhub_volume:/blockhub
 
 networks:
   blockhub_network:

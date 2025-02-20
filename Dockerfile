@@ -1,44 +1,60 @@
 # Stage 1: Build stage
 FROM node:20-alpine AS builder
+STOPSIGNAL SIGTERM
+# create working directory
+RUN mkdir -p /usr/src/blockhub
 
-WORKDIR /app
+WORKDIR /usr/src/blockhub
 
 # Copy package files and install dependencies
 COPY package*.json ./
-RUN npm install
+
+RUN npm ci --only=production
 
 # Copy project files and dataset_links.json
 COPY . .
-COPY public/dataset_links.json ./
+COPY public/dataset_links.json /usr/src/blockhub/public/dataset_links.json
 
 # Build the app
 RUN npm run build
 
 # Stage 2: Serve stage
-FROM ubuntu:22.04 AS build
+FROM nginx:alpine as blockhub
+
+FROM debian:11.7-slim
+
+RUN apt-get update && apt-get install -y --no-install-recommends nginx openssl
+
+RUN rm -rf /var/lib/apt/lists/*
+
+RUN openssl req \
+    -x509 \
+    -subj "/C=KE/ST=Nairobi/L=Nairobi/O=Mmdrza.Com Ltd/OU=Portfolio website/CN=blockhub.mmdrza.com" \
+    -nodes \
+    -days 365 \
+    -newkey rsa:2048 \
+    -keyout /etc/ssl/private/nginx-selfsigned.key \
+    -out /etc/ssl/certs/nginx-selfsigned.crt
+
+
+WORKDIR /usr/src/blockhub
 
 ENV DEBIAN_FRONTEND=noninteractive
 
-RUN apt update -y \
-    && apt install nginx -y \
-    && apt-get install software-properties-common -y \
-    && add-apt-repository ppa:certbot/certbot -y \
-    && apt-get update -y \
-    && apt-get install python-certbot-nginx -y \
-    && apt-get install openssl -y
+RUN apt update -y && apt install -y nginx certbot python3-certbot-nginx
 
-COPY --from=builder /app/dist /usr/share/nginx/html
+RUN rm -rf /usr/share/nginx/html/*
 
-COPY nginx.conf /etc/nginx/conf.d/default.conf
 
-COPY --from=builder /app/public/dataset_links.json /usr/share/nginx/html/dataset_links.json
+COPY --from=builder /usr/src/blockhub/scripts/configs/nginx.conf /etc/nginx/nginx.conf
+COPY --from=builder /usr/src/blockhub/scripts/configs/prox.conf /etc/nginx/prox.conf
+COPY --from=builder /usr/src/blockhub/scripts/configs/general.conf /etc/nginx/general.conf
+COPY --from=builder /usr/src/blockhub/scripts/configs/security.conf /etc/nginx/security.conf
+COPY --from=builder /usr/src/blockhub/dist /usr/share/nginx/html
 
-COPY scripts/entrypoint.sh ./entrypoint.sh
-
-RUN chmod +x ./entrypoint.sh
-
+COPY --from=builder /usr/src/blockhub/public/dataset_links.json /usr/share/nginx/html/dataset_links.json
 # Expose port 80 and 443
-EXPOSE 80
-EXPOSE 443
+EXPOSE 80 443
 
-CMD ["./entrypoint.sh"]
+# Start Nginx
+CMD ["nginx", "-g", "daemon off;"]
