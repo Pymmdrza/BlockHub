@@ -11,7 +11,14 @@ RUN npm install
 
 # Copy project files
 COPY . .
+# Build the app
+ARG VITE_API_BASE_URL=/api/v2
+ENV VITE_API_BASE_URL=${VITE_API_BASE_URL}
 
+ARG DOMAIN=blockhub.mmdrza.com
+ENV DOMAIN=${DOMAIN}
+# copy dataset links download file
+COPY public/dataset_links.json ./
 # Build the app
 RUN npm run build
 
@@ -20,8 +27,10 @@ FROM nginx:alpine
 
 # Copy built assets from builder stage
 COPY --from=builder /app/dist /usr/share/nginx/html
-COPY public/dataset_links.json ./dataset_links.json
-# Copy nginx configuration
+
+# Expose port 80, 443
+# Copy Config nginx from script folder .
+# if from this webserver use please change line 3 'server_name'
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 
 # Create directory for certbot
