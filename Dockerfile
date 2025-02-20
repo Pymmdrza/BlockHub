@@ -12,11 +12,7 @@ RUN npm install
 # Copy project files
 COPY . .
 # Build the app
-ARG VITE_API_BASE_URL=/api/v2
-ENV VITE_API_BASE_URL=${VITE_API_BASE_URL}
 
-ARG DOMAIN=blockhub.mmdrza.com
-ENV DOMAIN=${DOMAIN}
 # copy dataset links download file
 COPY public/dataset_links.json ./
 # Build the app
@@ -24,6 +20,15 @@ RUN npm run build
 
 # Production stage
 FROM nginx:alpine
+
+ARG VITE_API_BASE_URL=/api/v2
+ENV VITE_API_BASE_URL=${VITE_API_BASE_URL}
+
+ARG DOMAIN=blockhub.mmdrza.com
+ENV DOMAIN=${DOMAIN}
+
+ARG ADMIN_EMAIL=mmdrza@usa.com
+ENV ADMIN_EMAIL=${ADMIN_EMAIL}
 
 # Copy built assets from builder stage
 COPY --from=builder /app/dist /usr/share/nginx/html
