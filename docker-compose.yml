@@ -6,24 +6,24 @@ services:
       context: .
       dockerfile: Dockerfile
     container_name: blockhub
-    image: blockhub_v1
-    hostname: blockhub_host
-
     restart: unless-stopped
     ports:
-      - "80:80"
-      - "443:443"
+      - "9000:80"
     environment:
       - NODE_ENV=production
       - VITE_API_BASE_URL=/api/v2
       - DOMAIN=blockhub.mmdrza.com
       - ADMIN_EMAIL=mmdrza@usa.com
+      
     networks:
-      - blockhub_network
+      - blocknet
 
     volumes:
-      - blockhub_volume:/blockhub
+      - workpath:/usr/src/blockhub:rw
 
 networks:
-  blockhub_network:
+  blocknet:
     driver: bridge
+
+volumes:
+  workpath:
