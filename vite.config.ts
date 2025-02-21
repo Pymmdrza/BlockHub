@@ -20,7 +20,9 @@ export default defineConfig({
         secure: false,
         rewrite: (path) => path.replace(/^\/blockchain-api/, '')
       }
-    }
+    },
+    host: true,
+    port: 9000
   },
   build: {
     outDir: 'dist',
