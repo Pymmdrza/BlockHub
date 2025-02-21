@@ -1,29 +1,24 @@
-version: '3.8'
+version: "3.8"
 
 services:
   blockhub:
+    container_name: blockhub
+    image: blockhub
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: blockhub
-    restart: unless-stopped
     ports:
       - "9000:80"
+    restart: unless-stopped
     environment:
-      - NODE_ENV=production
       - VITE_API_BASE_URL=/api/v2
       - DOMAIN=blockhub.mmdrza.com
       - ADMIN_EMAIL=mmdrza@usa.com
-      
+    volumes:
+      - .:/app
     networks:
       - blocknet
-
-    volumes:
-      - workpath:/usr/src/blockhub:rw
 
 networks:
   blocknet:
     driver: bridge
-
-volumes:
-  workpath:

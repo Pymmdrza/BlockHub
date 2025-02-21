@@ -1,47 +1,29 @@
 # Stage 1: Build Stage
 FROM node:20-alpine AS builder
-WORKDIR /usr/src/blockhub
+
+WORKDIR /app
 
 # Copy package files and install dependencies
 COPY package*.json ./
 RUN npm install
 
-# Copy entire project and build the app
+# Copy the rest of the application code
 COPY . .
+
+# Build the app
 RUN npm run build
 
-# Define build arguments with default values (در صورت نیاز می‌توانید این مقادیر را override کنید)
-ARG NODE_ENV=production
-ARG VITE_API_BASE_URL=/api/v2
-ARG DOMAIN=$(PRIMARY_DOMAIN)
-ARG ADMIN_EMAIL=admin@example.com
-ARG DIST_PATH=/usr/src/blockhub/dist
-ARG HTML_PATH=/usr/share/nginx/html
-
-# Set environment variables based on build arguments
-ENV NODE_ENV=${NODE_ENV}
-ENV VITE_API_BASE_URL=${VITE_API_BASE_URL}
-ENV DOMAIN=${DOMAIN}
-ENV ADMIN_EMAIL=${ADMIN_EMAIL}
-ENV DIST_PATH=${DIST_PATH}
-ENV HTML_PATH=${HTML_PATH}
-
-# Stage 2: Serve Stage using nginx
+# Stage 2: Production Stage
 FROM nginx:alpine
-RUN apk add --no-cache gettext
-ENV DOMAIN=${DOMAIN}
-ENV HTML_PATH=${HTML_PATH}
-ENV DIST_PATH=${DIST_PATH}
 
-# Copy the dataset_links.json file from the builder stage into the designated HTML directory
-COPY --from=builder /usr/src/blockhub/public/dataset_links.json ${HTML_PATH}/dataset_links.json
+# Copy built application from the builder stage
+COPY --from=builder /app/dist /usr/share/nginx/html
 
-# Copy built application files from the builder stage to the HTML directory
-COPY --from=builder ${DIST_PATH} ${HTML_PATH}
+# Copy nginx configuration file
+COPY scripts/nginx.conf /etc/nginx/conf.d/default.conf
 
-# Expose port 9000 (users can map it to container's port 80 as desired)
-EXPOSE 9000
+# Expose port 80 for HTTP traffic
+EXPOSE 80
 
-RUN envsubst '$DOMAIN $HTML_PATH' < /usr/src/blockhub/scripts/nginx.conf > /etc/nginx/nginx.conf
-# Start nginx in the foreground
+# Command to start nginx
 CMD ["nginx", "-g", "daemon off;"]
