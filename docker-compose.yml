@@ -8,8 +8,7 @@ services:
     container_name: blockhub
     restart: unless-stopped
     ports:
-      - "80:80"
-      - "443:443"
+      - "9000:80"
     environment:
       - NODE_ENV=production
       - VITE_API_BASE_URL=/api/v2
@@ -20,7 +19,7 @@ services:
       - blocknet
 
     volumes:
-      - blockhub_volume:/blockhub
+      - workpath:/usr/src/blockhub
 
 networks:
   blocknet:
