@@ -6,9 +6,6 @@ services:
       context: .
       dockerfile: Dockerfile
     container_name: blockhub
-    image: blockhub_v1
-    hostname: blockhub_host
-
     restart: unless-stopped
     ports:
       - "80:80"
@@ -18,12 +15,13 @@ services:
       - VITE_API_BASE_URL=/api/v2
       - DOMAIN=blockhub.mmdrza.com
       - ADMIN_EMAIL=mmdrza@usa.com
+      
     networks:
-      - blockhub_network
+      - blocknet
 
     volumes:
       - blockhub_volume:/blockhub
 
 networks:
-  blockhub_network:
+  blocknet:
     driver: bridge
