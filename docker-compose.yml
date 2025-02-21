@@ -19,8 +19,11 @@ services:
       - blocknet
 
     volumes:
-      - workpath:/usr/src/blockhub
+      - workpath:/usr/src/blockhub:rw
 
 networks:
   blocknet:
     driver: bridge
+
+volumes:
+  workpath:
