@@ -29,6 +29,17 @@ export default defineConfig({
     assetsDir: 'assets',
     rollupOptions: {
       output: {
+        entryFileNames: 'assets/js/[name].js',
+        chunkFileNames: 'assets/js/[name]-[hash].js',
+        assetFileNames: (assetInfo) => {
+          if (/\.(css)$/.test(assetInfo.name ?? '')) {
+            return 'assets/css/[name].[ext]';
+          }
+          if (/\.(ico|png|jpg|jpeg|gif|svg|webp)$/.test(assetInfo.name ?? '')) {
+            return 'assets/img/[name].[ext]';
+          }
+          return 'assets/[name].[ext]';
+        },
         manualChunks: {
           vendor: ['react', 'react-dom', 'react-router-dom'],
         },
