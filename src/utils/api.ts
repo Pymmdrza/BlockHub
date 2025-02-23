@@ -71,14 +71,9 @@ export const fetchAddressInfo = async (address: string): Promise<AddressResponse
     
     // Process transactions to include values and timestamps
     const processedTransactions = data.txs.map((tx: any) => {
-      // Calculate total value for this transaction
-      const totalValue = tx.out.reduce((sum: number, output: any) => {
-        return sum + (output.value || 0);
-      }, 0);
-
       return {
         txid: tx.hash,
-        value: totalValue,
+        value: tx.result, // Use tx.result for value
         timestamp: tx.time || Math.floor(Date.now() / 1000)
       };
     });
