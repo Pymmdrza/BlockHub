@@ -9,7 +9,7 @@ export default defineConfig({
   server: {
     proxy: {
       '/api/v2': {
-        target: 'https://btcbook.guarda.co',
+        target: 'https://bitcoin.atomicwallet.io',
         changeOrigin: true,
         secure: false,
         rewrite: (path) => path
