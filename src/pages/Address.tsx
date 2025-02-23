@@ -207,7 +207,7 @@ export const Address: React.FC = () => {
                 <div className="flex items-center gap-2 bg-[#0E141B] px-3 py-1.5 rounded-lg border border-green-800/30">
                   <DollarSign className="w-3.5 h-3.5 text-green-400" />
                   <span className="text-green-400 text-xs whitespace-nowrap">
-                    {formatBitcoinValue(data.values[index])} BTC
+                    {formatBitcoinValue(data.values[index] || '0')} BTC
                   </span>
                 </div>
 
