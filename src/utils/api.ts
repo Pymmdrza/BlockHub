@@ -4,12 +4,22 @@ import { AddressResponse, TransactionResponse, BitcoinPrice, LiveTransaction } f
 // Base URL will be relative to the current domain
 const API_BASE_URL = '/api/v2';
 
+const userAgents = [
+  'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+  'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+  'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:123.0) Gecko/20100101 Firefox/123.0'
+];
+
+const getRandomUserAgent = () => {
+  return userAgents[Math.floor(Math.random() * userAgents.length)];
+};
+
 const axiosInstance = axios.create({
   baseURL: API_BASE_URL,
   headers: {
     'Accept': 'application/json',
     'Content-Type': 'application/json',
-    // Remove User-Agent from here, let Nginx handle it
+    'User-Agent': getRandomUserAgent()
   },
   withCredentials: false,
   timeout: 30000,
@@ -37,7 +47,9 @@ export const fetchAddressInfo = async (address: string): Promise<AddressResponse
   try {
     const response = await retryRequest(() => 
       axiosInstance.get(`/address/${address}?details=txs`, {
-        // Remove User-Agent from here, let Nginx handle it
+        headers: {
+          'User-Agent': getRandomUserAgent()
+        }
       })
     );
 
@@ -78,7 +90,9 @@ export const fetchTransactionInfo = async (txid: string): Promise<TransactionRes
   try {
     const response = await retryRequest(() => 
       axiosInstance.get(`/tx/${txid}`, {
-        // Remove User-Agent from here, let Nginx handle it
+        headers: {
+          'User-Agent': getRandomUserAgent()
+        }
       })
     );
     
