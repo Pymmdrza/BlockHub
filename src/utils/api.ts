@@ -59,7 +59,7 @@ const validateTransactionResponse = (data: any): void => {
 export const fetchAddressInfo = async (address: string): Promise<AddressResponse> => {
   try {
     const response = await retryRequest(() => 
-      axiosInstance.get(`/address/${address}?format=json`, {
+      axiosInstance.get(`/rawaddr/${address}?format=json`, {
         headers: {
           'User-Agent': getRandomUserAgent()
         }
