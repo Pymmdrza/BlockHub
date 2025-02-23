@@ -1,9 +1,6 @@
 import axios from 'axios';
 import { AddressResponse, TransactionResponse, BitcoinPrice, LiveTransaction } from '../types';
 
-// Base URL will be relative to the current domain
-const API_BASE_URL = '/api/v2';
-
 const userAgents = [
   'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
   'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
@@ -15,7 +12,7 @@ const getRandomUserAgent = () => {
 };
 
 const axiosInstance = axios.create({
-  baseURL: API_BASE_URL,
+  baseURL: '/blockchain-api',
   headers: {
     'Accept': 'application/json',
     'Content-Type': 'application/json',
@@ -43,10 +40,26 @@ const retryRequest = async <T>(fn: () => Promise<T>, retries = MAX_RETRIES): Pro
   }
 };
 
+const validateAddressResponse = (data: any): void => {
+  if (!data) throw new Error('Empty response from API');
+  if (typeof data !== 'object') throw new Error('Invalid response format from API');
+  if (!Array.isArray(data.txs)) throw new Error('Transaction data is missing or invalid');
+  if (typeof data.final_balance !== 'number') throw new Error('Balance data is missing or invalid');
+  if (typeof data.total_received !== 'number') throw new Error('Total received data is missing or invalid');
+  if (typeof data.total_sent !== 'number') throw new Error('Total sent data is missing or invalid');
+};
+
+const validateTransactionResponse = (data: any): void => {
+  if (!data) throw new Error('Empty response from API');
+  if (typeof data !== 'object') throw new Error('Invalid response format from API');
+  if (!Array.isArray(data.out)) throw new Error('Output data is missing or invalid');
+  if (!Array.isArray(data.inputs)) throw new Error('Input data is missing or invalid');
+};
+
 export const fetchAddressInfo = async (address: string): Promise<AddressResponse> => {
   try {
     const response = await retryRequest(() => 
-      axiosInstance.get(`/address/${address}?details=txs`, {
+      axiosInstance.get(`/address/${address}?format=json`, {
         headers: {
           'User-Agent': getRandomUserAgent()
         }
@@ -54,28 +67,36 @@ export const fetchAddressInfo = async (address: string): Promise<AddressResponse
     );
 
     const data = response.data;
+    validateAddressResponse(data);
     
     // Process transactions to include values and timestamps
-    const processedTransactions = data.transactions.map((tx: any) => ({
-      txid: tx.txid,
-      value: tx.value || '0',
-      timestamp: tx.blockTime || tx.time || Math.floor(Date.now() / 1000)
-    }));
+    const processedTransactions = data.txs.map((tx: any) => {
+      // Calculate total value for this transaction
+      const totalValue = tx.out.reduce((sum: number, output: any) => {
+        return sum + (output.value || 0);
+      }, 0);
+
+      return {
+        txid: tx.hash,
+        value: totalValue,
+        timestamp: tx.time || Math.floor(Date.now() / 1000)
+      };
+    });
 
     // Sort transactions by timestamp in descending order
     processedTransactions.sort((a: any, b: any) => b.timestamp - a.timestamp);
 
     return {
-      address: data.address,
-      balance: data.balance || '0',
-      totalReceived: data.totalReceived || '0',
-      totalSent: data.totalSent || '0',
-      unconfirmedBalance: data.unconfirmedBalance || '0',
-      unconfirmedTxs: data.unconfirmedTxs || 0,
-      txs: data.txs || 0,
-      txids: processedTransactions.map((tx: any) => tx.txid),
-      values: processedTransactions.map((tx: any) => tx.value),
-      timestamps: processedTransactions.map((tx: any) => tx.timestamp)
+      address: data.address || address,
+      balance: (data.final_balance / 100000000).toString(),
+      totalReceived: (data.total_received / 100000000).toString(),
+      totalSent: (data.total_sent / 100000000).toString(),
+      unconfirmedBalance: ((data.unconfirmed_balance || 0) / 100000000).toString(),
+      unconfirmedTxs: data.n_unredeemed || 0,
+      txs: data.n_tx || 0,
+      txids: processedTransactions.map(tx => tx.txid),
+      values: processedTransactions.map(tx => (tx.value / 100000000).toString()),
+      timestamps: processedTransactions.map(tx => tx.timestamp)
     };
   } catch (error) {
     if (axios.isAxiosError(error)) {
@@ -89,7 +110,7 @@ export const fetchAddressInfo = async (address: string): Promise<AddressResponse
 export const fetchTransactionInfo = async (txid: string): Promise<TransactionResponse> => {
   try {
     const response = await retryRequest(() => 
-      axiosInstance.get(`/tx/${txid}`, {
+      axiosInstance.get(`/rawtx/${txid}?format=json`, {
         headers: {
           'User-Agent': getRandomUserAgent()
         }
@@ -97,22 +118,28 @@ export const fetchTransactionInfo = async (txid: string): Promise<TransactionRes
     );
     
     const data = response.data;
+    validateTransactionResponse(data);
+
+    // Calculate total value from outputs
+    const totalValue = data.out.reduce((sum: number, output: any) => {
+      return sum + (output.value || 0);
+    }, 0);
 
     return {
-      txid: data.txid,
-      blockHeight: data.blockHeight || 0,
-      blockTime: data.blockTime || Math.floor(Date.now() / 1000),
+      txid: data.hash || txid,
+      blockHeight: data.block_height || 0,
+      blockTime: data.time || Math.floor(Date.now() / 1000),
       confirmations: data.confirmations || 0,
-      fees: data.fees || '0',
+      fees: ((data.fee || 0) / 100000000).toString(),
       size: data.size || 0,
-      value: data.value || '0',
-      vin: (data.vin || []).map((input: any) => ({
-        addresses: input.addresses || [],
-        value: input.value || '0'
+      value: (totalValue / 100000000).toString(),
+      vin: data.inputs.map((input: any) => ({
+        addresses: input.prev_out?.addr ? [input.prev_out.addr] : [],
+        value: input.prev_out ? ((input.prev_out.value || 0) / 100000000).toString() : '0'
       })),
-      vout: (data.vout || []).map((output: any) => ({
-        addresses: output.addresses || [],
-        value: output.value || '0'
+      vout: data.out.map((output: any) => ({
+        addresses: output.addr ? [output.addr] : [],
+        value: ((output.value || 0) / 100000000).toString()
       }))
     };
   } catch (error) {
