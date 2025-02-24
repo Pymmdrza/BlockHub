@@ -2,7 +2,7 @@ import axios from 'axios';
 import { AddressResponse, TransactionResponse, BitcoinPrice, LiveTransaction } from '../types';
 
 // Base URL will be relative to the current domain
-const API_BASE_URL = '/api/v2';
+const API_BASE_URL = 'btc-api/api/v2';
 
 const userAgents = [
   'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
@@ -154,7 +154,7 @@ export const fetchBitcoinPrice = async (): Promise<BitcoinPrice> => {
 
 export const fetchLiveTransactions = async (): Promise<LiveTransaction[]> => {
   try {
-    const response = await axios.get('/blockchain-api/unconfirmed-transactions?format=json');
+    const response = await axios.get('/block3/unconfirmed-transactions?format=json');
     return response.data.txs || [];
   } catch (error) {
     console.error('Error fetching live transactions:', error);

@@ -14,7 +14,7 @@ export default defineConfig({
         secure: false,
         rewrite: (path) => path
       },
-      '/blockchain-api': {
+      '/block3': {
         target: 'https://blockchain.info',
         changeOrigin: true,
         secure: false,
