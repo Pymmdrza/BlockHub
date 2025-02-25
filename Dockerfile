@@ -5,10 +5,10 @@ WORKDIR /app
 
 # Copy package files and install dependencies
 COPY package*.json ./
-RUN npm ci
+RUN npm install
 
 # Copy the rest of the application code
-COPY . .
+COPY . ./
 
 # Build the app
 RUN npm run build
@@ -23,15 +23,15 @@ RUN apk add --no-cache curl
 COPY --from=builder /app/dist /usr/share/nginx/html
 
 # Copy nginx configuration
-COPY --from=builder scripts/nginx.conf /etc/nginx/templates/default.conf.template
-COPY  --from=builder docker-entrypoint.sh /docker-entrypoint.sh
+COPY --from=builder /app/scripts/nginx.conf /etc/nginx/templates/default.conf.template
+COPY  --from=builder /app/docker-entrypoint.sh ./docker-entrypoint.sh
 # Create directory for health checks
 RUN mkdir -p /usr/share/nginx/html/health
 
 # Add health check file
 RUN echo "OK" > /usr/share/nginx/html/health/status
 
-RUN chmod +x /docker-entrypoint.sh
+RUN chmod +x ./docker-entrypoint.sh
 
 # Expose ports
 EXPOSE 80 443 9000
@@ -45,5 +45,5 @@ ENV NGINX_WORKER_PROCESSES=auto \
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
     CMD curl -f http://localhost/health/status || exit 1
 
-ENTRYPOINT ["/docker-entrypoint.sh"]
+ENTRYPOINT ["./docker-entrypoint.sh"]
 CMD ["nginx", "-g", "daemon off;"]
