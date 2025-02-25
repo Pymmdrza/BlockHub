@@ -8,7 +8,7 @@ COPY package*.json ./
 RUN npm install
 
 # Copy the rest of the application code
-COPY . ./
+COPY . .
 
 # Build the app
 RUN npm run build
@@ -16,34 +16,14 @@ RUN npm run build
 # Stage 2: Production Stage
 FROM nginx:alpine
 
-# Install required packages
-RUN apk add --no-cache curl
-
 # Copy built application from the builder stage
 COPY --from=builder /app/dist /usr/share/nginx/html
 
-# Copy nginx configuration
-COPY --from=builder /app/scripts/nginx.conf /etc/nginx/templates/default.conf.template
-COPY  --from=builder /app/docker-entrypoint.sh ./docker-entrypoint.sh
-# Create directory for health checks
-RUN mkdir -p /usr/share/nginx/html/health
+# Copy nginx configuration file
+COPY scripts/nginx.conf /etc/nginx/conf.d/default.conf
 
-# Add health check file
-RUN echo "OK" > /usr/share/nginx/html/health/status
-
-RUN chmod +x ./docker-entrypoint.sh
-
-# Expose ports
+# Expose port 80 for HTTP traffic
 EXPOSE 80 443 9000
 
-# Set environment variables
-ENV NGINX_WORKER_PROCESSES=auto \
-    NGINX_WORKER_CONNECTIONS=1024 \
-    PROXY_READ_TIMEOUT=60 \
-    PROXY_CONNECT_TIMEOUT=60
-
-HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD curl -f http://localhost/health/status || exit 1
-
-ENTRYPOINT ["./docker-entrypoint.sh"]
+# Command to start nginx
 CMD ["nginx", "-g", "daemon off;"]

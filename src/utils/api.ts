@@ -1,9 +1,8 @@
 import axios from 'axios';
 import { AddressResponse, TransactionResponse, BitcoinPrice, LiveTransaction } from '../types';
 
-// Base URL should be absolute when running in Docker
+// Base URL will be relative to the current domain
 const API_BASE_URL = '/api/v2';
-const BLOCKCHAIN_API_URL = '/block_api';
 
 const userAgents = [
   'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
@@ -15,36 +14,16 @@ const getRandomUserAgent = () => {
   return userAgents[Math.floor(Math.random() * userAgents.length)];
 };
 
-// Create separate axios instances for different APIs
-const bitcoinApi = axios.create({
+const axiosInstance = axios.create({
   baseURL: API_BASE_URL,
   headers: {
     'Accept': 'application/json',
     'Content-Type': 'application/json',
+    'User-Agent': getRandomUserAgent()
   },
+  withCredentials: false,
   timeout: 30000,
-  validateStatus: (status) => status >= 200 && status < 500
-});
-
-const blockchainApi = axios.create({
-  baseURL: BLOCKCHAIN_API_URL,
-  headers: {
-    'Accept': 'application/json',
-    'Content-Type': 'application/json',
-  },
-  timeout: 30000,
-  validateStatus: (status) => status >= 200 && status < 500
-});
-
-// Add request interceptor to rotate User-Agent
-bitcoinApi.interceptors.request.use((config) => {
-  config.headers['User-Agent'] = getRandomUserAgent();
-  return config;
-});
-
-blockchainApi.interceptors.request.use((config) => {
-  config.headers['User-Agent'] = getRandomUserAgent();
-  return config;
+  method: 'GET'
 });
 
 const MAX_RETRIES = 3;
@@ -56,8 +35,7 @@ const retryRequest = async <T>(fn: () => Promise<T>, retries = MAX_RETRIES): Pro
   try {
     return await fn();
   } catch (error) {
-    if (retries > 0 && axios.isAxiosError(error) && (error.response?.status ?? 500) >= 500) {
-      console.warn(`Request failed, retrying... (${retries} attempts left)`);
+    if (retries > 0) {
       await sleep(RETRY_DELAY);
       return retryRequest(fn, retries - 1);
     }
@@ -68,17 +46,17 @@ const retryRequest = async <T>(fn: () => Promise<T>, retries = MAX_RETRIES): Pro
 export const fetchAddressInfo = async (address: string): Promise<AddressResponse> => {
   try {
     const response = await retryRequest(() => 
-      bitcoinApi.get(`/address/${address}?details=txs`)
+      axiosInstance.get(`/address/${address}?details=txs`, {
+        headers: {
+          'User-Agent': getRandomUserAgent()
+        }
+      })
     );
-
-    if (!response.data) {
-      throw new Error('No data received from API');
-    }
 
     const data = response.data;
     
     // Process transactions to include values and timestamps
-    const processedTransactions = (data.transactions || []).map((tx: any) => ({
+    const processedTransactions = data.transactions.map((tx: any) => ({
       txid: tx.txid,
       value: tx.value || '0',
       timestamp: tx.blockTime || tx.time || Math.floor(Date.now() / 1000)
@@ -100,7 +78,6 @@ export const fetchAddressInfo = async (address: string): Promise<AddressResponse
       timestamps: processedTransactions.map((tx: any) => tx.timestamp)
     };
   } catch (error) {
-    console.error('Error fetching address info:', error);
     if (axios.isAxiosError(error)) {
       const errorMessage = error.response?.data?.message || error.message;
       throw new Error(`Failed to fetch address info: ${errorMessage}`);
@@ -112,12 +89,12 @@ export const fetchAddressInfo = async (address: string): Promise<AddressResponse
 export const fetchTransactionInfo = async (txid: string): Promise<TransactionResponse> => {
   try {
     const response = await retryRequest(() => 
-      bitcoinApi.get(`/tx/${txid}`)
+      axiosInstance.get(`/tx/${txid}`, {
+        headers: {
+          'User-Agent': getRandomUserAgent()
+        }
+      })
     );
-
-    if (!response.data) {
-      throw new Error('No data received from API');
-    }
     
     const data = response.data;
 
@@ -139,7 +116,6 @@ export const fetchTransactionInfo = async (txid: string): Promise<TransactionRes
       }))
     };
   } catch (error) {
-    console.error('Error fetching transaction info:', error);
     if (axios.isAxiosError(error)) {
       const errorMessage = error.response?.data?.message || error.message;
       throw new Error(`Failed to fetch transaction info: ${errorMessage}`);
@@ -155,14 +131,9 @@ export const fetchBitcoinPrice = async (): Promise<BitcoinPrice> => {
         ids: 'bitcoin',
         vs_currencies: 'usd',
         include_24hr_change: true
-      },
-      timeout: 10000
+      }
     });
     
-    if (!response.data?.bitcoin) {
-      throw new Error('Invalid price data received');
-    }
-
     return {
       USD: {
         last: response.data.bitcoin.usd || 0,
@@ -171,7 +142,6 @@ export const fetchBitcoinPrice = async (): Promise<BitcoinPrice> => {
       }
     };
   } catch (error) {
-    console.error('Error fetching Bitcoin price:', error);
     return {
       USD: {
         last: 0,
@@ -184,12 +154,7 @@ export const fetchBitcoinPrice = async (): Promise<BitcoinPrice> => {
 
 export const fetchLiveTransactions = async (): Promise<LiveTransaction[]> => {
   try {
-    const response = await blockchainApi.get('/unconfirmed-transactions?format=json');
-    
-    if (!response.data?.txs) {
-      throw new Error('Invalid transaction data received');
-    }
-
+    const response = await axios.get('/block_api/unconfirmed-transactions?format=json');
     return response.data.txs || [];
   } catch (error) {
     console.error('Error fetching live transactions:', error);

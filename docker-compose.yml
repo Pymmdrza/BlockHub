@@ -8,20 +8,14 @@ services:
       context: .
       dockerfile: Dockerfile
     ports:
-      - "${PORT:-80}:80"
+      - "${PORT:-9000}:80"
     environment:
       - NGINX_WORKER_PROCESSES=auto
       - NGINX_WORKER_CONNECTIONS=1024
       - PROXY_READ_TIMEOUT=60
       - PROXY_CONNECT_TIMEOUT=60
-      - DOMAIN=${DOMAIN:-localhost}
+      - DOMAIN=${DOMAIN:-0.0.0.0}
       - VITE_API_BASE_URL=/api/v2
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost/health/status"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 5s
     restart: unless-stopped
     networks:
       - blocknet
