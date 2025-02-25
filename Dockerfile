@@ -23,20 +23,18 @@ RUN apk add --no-cache curl
 COPY --from=builder /app/dist /usr/share/nginx/html
 
 # Copy nginx configuration
-COPY nginx.conf /etc/nginx/templates/default.conf.template
-
+COPY --from=builder scripts/nginx.conf /etc/nginx/templates/default.conf.template
+COPY  --from=builder docker-entrypoint.sh /docker-entrypoint.sh
 # Create directory for health checks
 RUN mkdir -p /usr/share/nginx/html/health
 
 # Add health check file
 RUN echo "OK" > /usr/share/nginx/html/health/status
 
-# Add entrypoint script
-COPY docker-entrypoint.sh /docker-entrypoint.sh
 RUN chmod +x /docker-entrypoint.sh
 
 # Expose ports
-EXPOSE 80
+EXPOSE 80 443 9000
 
 # Set environment variables
 ENV NGINX_WORKER_PROCESSES=auto \
