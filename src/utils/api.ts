@@ -154,7 +154,7 @@ export const fetchBitcoinPrice = async (): Promise<BitcoinPrice> => {
 
 export const fetchLiveTransactions = async (): Promise<LiveTransaction[]> => {
   try {
-    const response = await axios.get('/block_api/unconfirmed-transactions?format=json');
+    const response = await axios.get('/blockchain-api/unconfirmed-transactions?format=json');
     return response.data.txs || [];
   } catch (error) {
     console.error('Error fetching live transactions:', error);
