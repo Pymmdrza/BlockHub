@@ -32,6 +32,7 @@ export default defineConfig({
       }
     },
     host: true,
+    origin: "https://0.0.0.0:9000"
     port: 9000
   },
   build: {

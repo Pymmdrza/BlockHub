@@ -8,16 +8,21 @@ services:
       context: .
       dockerfile: Dockerfile
     ports:
-      - "9000:9000"
-      - "80:80"
-      - "443:443"
-    restart: unless-stopped
+      - "${PORT:-80}:80"
     environment:
+      - NGINX_WORKER_PROCESSES=auto
+      - NGINX_WORKER_CONNECTIONS=1024
+      - PROXY_READ_TIMEOUT=60
+      - PROXY_CONNECT_TIMEOUT=60
+      - DOMAIN=${DOMAIN:-localhost}
       - VITE_API_BASE_URL=/api/v2
-      - DOMAIN=blockhub.mmdrza.com
-      - ADMIN_EMAIL=mmdrza@usa.com
-    volumes:
-      - .:/app
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost/health/status"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 5s
+    restart: unless-stopped
     networks:
       - blocknet
 
