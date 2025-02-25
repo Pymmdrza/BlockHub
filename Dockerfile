@@ -5,7 +5,7 @@ WORKDIR /app
 
 # Copy package files and install dependencies
 COPY package*.json ./
-RUN npm ci
+RUN npm install
 
 # Copy the rest of the application code
 COPY . .
@@ -23,7 +23,7 @@ RUN apk add --no-cache curl
 COPY --from=builder /app/dist /usr/share/nginx/html
 
 # Copy nginx configuration
-COPY nginx.conf /etc/nginx/templates/default.conf.template
+COPY scripts/nginx.conf /etc/nginx/templates/default.conf.template
 
 
 # Create directory for health checks
