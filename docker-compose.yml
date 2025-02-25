@@ -9,6 +9,7 @@ services:
       dockerfile: Dockerfile
     ports:
       - "${PORT:-80}:80"
+      - "443:443"
     environment:
       - NGINX_WORKER_PROCESSES=auto
       - NGINX_WORKER_CONNECTIONS=1024
@@ -23,6 +24,8 @@ services:
       retries: 3
       start_period: 5s
     restart: unless-stopped
+    volumes:
+      - ./certs:/etc/ssl
     networks:
       - blocknet
 
