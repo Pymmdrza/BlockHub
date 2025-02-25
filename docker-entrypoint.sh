@@ -13,6 +13,16 @@ SSL_CERTIFICATE_KEY=${SSL_CERTIFICATE_KEY:-/etc/ssl/private/self-signed.key}
 
 # Function to check if SSL certificates exist
 check_ssl_certificates() {
+  # Ensure the directories for certificates exist
+  if [[ ! -d "/etc/ssl/certs" ]]; then
+    echo -e "${YELLOW}Creating directory: /etc/ssl/certs${NC}"
+    mkdir -p /etc/ssl/certs
+  fi
+  if [[ ! -d "/etc/ssl/private" ]]; then
+    echo -e "${YELLOW}Creating directory: /etc/ssl/private${NC}"
+    mkdir -p /etc/ssl/private
+  fi
+
   if [[ ! -f "$SSL_CERTIFICATE" || ! -f "$SSL_CERTIFICATE_KEY" ]]; then
     echo -e "${YELLOW}SSL certificates not found. Generating self-signed certificates...${NC}"
     bash /scripts/generate-ssl-cert.sh

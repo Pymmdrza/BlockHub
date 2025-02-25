@@ -25,9 +25,6 @@ COPY --from=builder /app/dist /usr/share/nginx/html
 # Copy nginx configuration
 COPY nginx.conf /etc/nginx/templates/default.conf.template
 
-# Copy SSL certificates
-COPY scripts/certs/self-signed.crt /etc/ssl/certs/self-signed.crt
-COPY scripts/certs/self-signed.key /etc/ssl/private/self-signed.key
 
 # Create directory for health checks
 RUN mkdir -p /usr/share/nginx/html/health
