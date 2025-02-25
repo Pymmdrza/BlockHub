@@ -26,6 +26,7 @@ services:
     restart: unless-stopped
     volumes:
       - ./certs:/etc/ssl
+      - ./scripts:/scripts
     networks:
       - blocknet
 
