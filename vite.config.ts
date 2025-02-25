@@ -12,13 +12,23 @@ export default defineConfig({
         target: 'https://bitcoin.atomicwallet.io',
         changeOrigin: true,
         secure: false,
-        rewrite: (path) => path
+        rewrite: (path) => path,
+        headers: {
+          'Accept': 'application/json',
+          'Connection': 'keep-alive'
+        },
+        timeout: 30000
       },
       '/block_api': {
         target: 'https://blockchain.info',
         changeOrigin: true,
         secure: false,
-        rewrite: (path) => path.replace(/^\/blockchain-api/, '')
+        rewrite: (path) => path.replace(/^\/block_api/, ''),
+        headers: {
+          'Accept': 'application/json',
+          'Connection': 'keep-alive'
+        },
+        timeout: 30000
       }
     },
     host: true,
