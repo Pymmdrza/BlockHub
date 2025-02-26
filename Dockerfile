@@ -27,11 +27,11 @@ COPY --from=builder /app/public/dataset_links.json /var/www/html/dataset_links.j
 COPY --from=builder /app/scripts/nginx.conf /etc/nginx/conf.d/default.conf
 
 # Generate self-signed SSL certificate (for demonstration purposes)
-COPY --from=builder /app/scripts/get_ssl.sh get_ssl.sh
+COPY --from=builder /app/scripts/get_ssl.sh /usr/local/bin/get_ssl.sh
 
-RUN chmod +x get_ssl.sh
+RUN chmod +x /usr/local/bin/get_ssl.sh
 
-RUN ./get_ssl.sh
+RUN /usr/local/bin/get_ssl.sh
 
 # Set environment variables
 ENV DOMAIN=${DOMAIN}
