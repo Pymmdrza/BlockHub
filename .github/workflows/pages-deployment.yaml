@@ -1,4 +1,18 @@
-on: [push]
+name: BlockHub Cloudflare Page
+
+on:
+  workflow_dispatch:
+    inputs:
+      logLevel:
+        description: Log level
+        required: true
+        default: warning
+        type: choice
+        options:
+          - push
+          - deploy
+          - build
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
