@@ -47,16 +47,10 @@ RUN rm -rf ./*
 # Copy built application files from the builder stage to the nginx html directory
 COPY --from=build /app/dist .
 
-# Copy dataset_links.json
-COPY --from=build /app/public/dataset_links.json .
-
 # Copy custom nginx configuration
 # COPY --from=builder /app/scripts/nginx.conf /etc/nginx/conf.d/default.conf
 
-# Generate self-signed SSL certificate (for demonstration purposes)
-COPY --from=build /app/scripts/get_ssl.sh .
-
-RUN chmod +x ./get_ssl.sh
+RUN chmod +x get_ssl.sh
 
 CMD [ "./get_ssl.sh" ]
 
