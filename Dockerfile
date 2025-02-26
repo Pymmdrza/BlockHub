@@ -50,10 +50,6 @@ COPY --from=build /app/dist .
 # Copy custom nginx configuration
 # COPY --from=builder /app/scripts/nginx.conf /etc/nginx/conf.d/default.conf
 
-RUN chmod +x get_ssl.sh
-
-CMD [ "./get_ssl.sh" ]
-
 # Set environment variables
 #ENV DOMAIN=${DOMAIN}
 #ENV HTML_PATH=/var/www/html
