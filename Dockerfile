@@ -35,7 +35,6 @@ EOF
 # 2. For Nginx setup
 FROM nginx:alpine
 
-EXPOSE 6000
 # Copy config nginx
 COPY --from=build /app/.nginx/nginx.conf /etc/nginx/conf.d/default.conf
 COPY --from=build /app/.nginx/get_ssl.sh /etc/nginx/get_ssl.sh
