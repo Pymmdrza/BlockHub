@@ -74,3 +74,6 @@ main() {
 }
 
 main
+
+# run nginx
+exec "$@"
