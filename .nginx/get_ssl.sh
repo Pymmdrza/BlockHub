@@ -4,10 +4,21 @@ set -euo pipefail
 IFS=$'\n\t'
 
 
-if [ "$EUID" -ne 0 ]; then
+if [ "$(id -u)" -ne 0 ]; then
     echo "Please run this script as root."
     exit 1
 fi
+
+SSL_DIR="/etc/nginx/ssl"
+SSL_KEY="$SSL_DIR/nginx.key"
+SSL_CRT="$SSL_DIR/nginx.crt"
+
+if [ ! -d "$SSL_DIR" ]; then
+    mkdir -p "$SSL_DIR"
+fi
+
+[ -f "$SSL_KEY" ] && rm -f "$SSL_KEY"
+[ -f "$SSL_CRT" ] && rm -f "$SSL_CRT"
 
 install_openssl() {
     if command -v openssl >/dev/null 2>&1; then
@@ -36,8 +47,8 @@ create_ssl_directory() {
 }
 
 generate_ssl_cert() {
-    local ssl_key="/etc/nginx/ssl/nginx.key"
-    local ssl_crt="/etc/nginx/ssl/nginx.crt"
+    local ssl_key=$SSL_KEY
+    local ssl_crt=$SSL_CRT
     
 
     if [ -f "$ssl_key" ] || [ -f "$ssl_crt" ]; then
