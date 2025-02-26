@@ -14,11 +14,11 @@ export default defineConfig({
         secure: false,
         rewrite: (path) => path
       },
-      '/blockchain-api': {
+      '/block-api': {
         target: 'https://blockchain.info',
         changeOrigin: true,
         secure: false,
-        rewrite: (path) => path.replace(/^\/block_api/, '')
+        rewrite: (path) => path.replace(/^\/block-api/, '')
       }
     },
     host: true,
