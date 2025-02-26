@@ -1,13 +1,14 @@
 {
-  "name": "BlockHub",
+  "name": "blockhub",
   "private": true,
-  "version": "1.1.0",
+  "version": "1.0.3",
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "proxy": "./route.sh"
   },
   "dependencies": {
     "axios": "^1.6.7",

@@ -1,5 +1,5 @@
 # Stage 1: Build Stage
-FROM node:20-alpine AS builder
+FROM node AS builder
 
 WORKDIR /app
 
@@ -7,24 +7,28 @@ WORKDIR /app
 COPY package*.json ./
 RUN npm install
 
-# Copy the rest of the application code
+# Copy entire project and build the app
 COPY . .
-
-# Build the app
 RUN npm run build
 
-# Stage 2: Production Stage
-FROM nginx:alpine
+# Stage 2: Serve Stage using nginx-auto-ssl
+FROM valian/nginx-auto-ssl:latest
 
-# Copy built application from the builder stage
-COPY --from=builder /app/dist /usr/share/nginx/html
+# Copy built application files from the builder stage to the nginx html directory
+COPY --from=builder /app/dist /var/www/html
 
-# Copy nginx configuration file
-COPY scripts/nginx.conf /etc/nginx/conf.d/default.conf
+# Copy dataset_links.json
+COPY --from=builder /app/public/dataset_links.json /var/www/html/dataset_links.json
 
-# Expose port 80 for HTTP traffic
+# Copy custom nginx configuration
+COPY nginx.conf /etc/nginx/conf.d/default.conf
+
+# Set environment variables
+ENV DOMAIN=${DOMAIN}
+ENV HTML_PATH=/var/www/html
+
+# Expose port 80 and 443 (nginx-auto-ssl handles redirection)
 EXPOSE 80 443
 
-ENTRYPOINT [ "docker-ssl-run.sh" ]
-# Command to start nginx
-CMD ["nginx", "-g", "daemon off;"]
+# Run custom entrypoint script
+ENTRYPOINT ["/bin/sh", "-c", "envsubst < /etc/nginx/conf.d/default.conf > /etc/nginx/conf.d/temp.conf && mv /etc/nginx/conf.d/temp.conf /etc/nginx/conf.d/default.conf && /entrypoint.sh nginx -g 'daemon off;'"]

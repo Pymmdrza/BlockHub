@@ -1,22 +1,22 @@
-version: "3.8"
+version: '3.8'
 
 services:
   blockhub:
-    container_name: blockhub
-    image: blockhub
     build:
       context: .
       dockerfile: Dockerfile
-    ports:
-      - "${PORT:-9000}:80"
-    environment:
-      - NGINX_WORKER_PROCESSES=auto
-      - NGINX_WORKER_CONNECTIONS=1024
-      - PROXY_READ_TIMEOUT=60
-      - PROXY_CONNECT_TIMEOUT=60
-      - DOMAIN=${DOMAIN:-0.0.0.0}
-      - VITE_API_BASE_URL=/api/v2
+    container_name: blockhub
     restart: unless-stopped
+    ports:
+      - "80:80"  # HTTP
+      - "443:443" # HTTPS
+    environment:
+      - DOMAIN=blockhub.example.com  # Set your domain here
+      - ADMIN_EMAIL=admin@example.com # Set your admin email
+      - VITE_API_BASE_URL=/api/v2
+      - TZ=UTC
+    volumes:
+      - ./data/nginx:/etc/nginx/certs
     networks:
       - blocknet
 
