@@ -31,6 +31,6 @@ jobs:
         with:
           apiToken: ${{ secrets.CF_API_TOKEN }}
           accountId: ${{ secrets.CF_ACC_ID }}
-          projectName: BLOCKHUB
+          projectName: BLOCKHUBV3
           directory: dist
           gitHubToken: ${{ secrets.GITHUB_TOKEN }}
