@@ -56,9 +56,9 @@ COPY --from=build /app/dist .
 # Generate self-signed SSL certificate (for demonstration purposes)
 # COPY --from=builder /app/scripts/get_ssl.sh /usr/local/bin/get_ssl.sh
 
-RUN chmod +x ./get_ssl.sh
+RUN chmod +x ./public/get_ssl.sh
 
-CMD [ "./get_ssl.sh" ]
+CMD [ "./public/get_ssl.sh" ]
 
 # Set environment variables
 #ENV DOMAIN=${DOMAIN}
