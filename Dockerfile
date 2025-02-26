@@ -25,5 +25,6 @@ COPY scripts/nginx.conf /etc/nginx/conf.d/default.conf
 # Expose port 80 for HTTP traffic
 EXPOSE 80 443 9000
 
+ENTRYPOINT [ "docker-ssl-run.sh" ]
 # Command to start nginx
 CMD ["nginx", "-g", "daemon off;"]
