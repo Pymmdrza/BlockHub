@@ -39,7 +39,7 @@ FROM nginx:alpine
 COPY --from=build /app/.nginx/nginx.conf /etc/nginx/conf.d/default.conf
 COPY --from=build /app/.nginx/get_ssl.sh /etc/nginx/get_ssl.sh
 RUN chmod +x /etc/nginx/get_ssl.sh
-CMD ["/bin/sh", "-c", "/etc/nginx/get_ssl.sh"]
+
 WORKDIR /usr/share/nginx/html
 
 # Remove default nginx static assets
@@ -58,8 +58,8 @@ COPY --from=build /app/dist .
 
 # Expose port 80 and 443
 #EXPOSE 80 443
-
+ENTRYPOINT ["/etc/nginx/get_ssl.sh"]
 # Containers run nginx with global directives and daemon off
-ENTRYPOINT ["nginx", "-g", "daemon off;"]
+CMD ["nginx", "-g", "daemon off;"]
 # Run custom entrypoint script
 # ENTRYPOINT ["/bin/sh", "-c", "envsubst < /etc/nginx/conf.d/default.conf > /etc/nginx/conf.d/temp.conf && mv /etc/nginx/conf.d/temp.conf /etc/nginx/conf.d/default.conf && nginx -g 'daemon off;'"]
