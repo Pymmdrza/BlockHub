@@ -24,11 +24,14 @@ COPY --from=builder /app/dist /var/www/html
 COPY --from=builder /app/public/dataset_links.json /var/www/html/dataset_links.json
 
 # Copy custom nginx configuration
-COPY nginx.conf /etc/nginx/conf.d/default.conf
+COPY --from=builder nginx.conf /etc/nginx/conf.d/default.conf
 
 # Generate self-signed SSL certificate (for demonstration purposes)
-RUN openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout /etc/nginx/ssl/nginx.key -out /etc/nginx/ssl/nginx.crt \
-    -subj "/C=US/ST=California/L=San Francisco/O=MyOrg/CN=example.com"
+COPY --from=builder /app/scripts/get_ssl.sh get_ssl.sh
+
+RUN chmod +x get_ssl.sh
+
+RUN ./get_ssl.sh
 
 # Set environment variables
 ENV DOMAIN=${DOMAIN}
