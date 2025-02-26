@@ -39,7 +39,7 @@ FROM nginx:alpine
 COPY --from=build /app/.nginx/nginx.conf /etc/nginx/conf.d/default.conf
 COPY --from=build /app/.nginx/get_ssl.sh /etc/nginx/get_ssl.sh
 RUN chmod +x /etc/nginx/get_ssl.sh
-CMD ["exec", "-c", "/etc/nginx/get_ssl.sh" ]
+RUN /etc/nginx/get_ssl.sh
 WORKDIR /usr/share/nginx/html
 
 # Remove default nginx static assets
