@@ -24,7 +24,7 @@ COPY --from=builder /app/dist /var/www/html
 COPY --from=builder /app/public/dataset_links.json /var/www/html/dataset_links.json
 
 # Copy custom nginx configuration
-COPY --from=builder nginx.conf /etc/nginx/conf.d/default.conf
+COPY --from=builder /app/scripts/nginx.conf /etc/nginx/conf.d/default.conf
 
 # Generate self-signed SSL certificate (for demonstration purposes)
 COPY --from=builder /app/scripts/get_ssl.sh get_ssl.sh
