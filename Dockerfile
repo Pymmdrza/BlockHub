@@ -10,7 +10,7 @@ RUN npm install
 # Copy entire project and build the app
 COPY . /app
 
-ENV PORT=6000
+ENV PORT=5000
 
 CMD ["npm", "run", "dev"]
 
@@ -58,7 +58,7 @@ COPY --from=build /app/dist .
 #ENV HTML_PATH=/var/www/html
 
 # Expose port 80 and 443
-#EXPOSE 80 443
+EXPOSE 80 443 5000
 ENTRYPOINT ["/etc/nginx/get_ssl.sh"]
 # Containers run nginx with global directives and daemon off
 CMD ["nginx", "-g", "daemon off;"]
