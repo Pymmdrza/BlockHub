@@ -34,9 +34,8 @@ EOF
 
 # 2. For Nginx setup
 FROM nginx:alpine
-ENV DOMAIN=$PRIMARY_DOMAIN
-ENV PROXY_READ_TIMEOUT=100
-ENV PROXY_CONNECT_TIMEOUT=100
+
+
 # Copy config nginx
 COPY --from=build /app/.nginx/nginx.conf /etc/nginx/conf.d/default.conf
 COPY --from=build /app/.nginx/get_ssl.sh /etc/nginx/get_ssl.sh
