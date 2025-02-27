@@ -7,8 +7,20 @@ export default defineConfig({
     exclude: ['lucide-react'],
   },
   server: {
-    host: true,
-    port: 9000
+    proxy: {
+      '/api/v2': {
+        target: 'https://btcbook.guarda.co',
+        changeOrigin: true,
+        secure: false,
+        rewrite: (path) => path
+      },
+      '/blockchain-api': {
+        target: 'https://blockchain.info',
+        changeOrigin: true,
+        secure: false,
+        rewrite: (path) => path.replace(/^\/blockchain-api/, '')
+      }
+    }
   },
   build: {
     outDir: 'dist',
