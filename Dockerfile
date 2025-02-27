@@ -1,5 +1,5 @@
 # Stage 1: Build Stage
-FROM node:lts AS development
+FROM node:lts AS build
 
 WORKDIR /app
 
@@ -10,17 +10,10 @@ RUN npm install
 # Copy entire project and build the app
 COPY . /app
 
-ENV PORT=5000
-
-CMD ["npm", "run", "dev"]
-
-
-FROM development AS build
-
+ENV PORT=9000
 
 RUN npm run build
 
-FROM development AS dev-envs
 RUN <<EOF
 apt-get update
 apt-get install -y --no-install-recommends git
@@ -33,33 +26,42 @@ usermod -aG docker vscode
 EOF
 
 # 2. For Nginx setup
-FROM nginx:alpine
+FROM ubuntu:20.04 AS runner
+
+RUN <<EOF
+apt-get update
+apt-get install -y --no-install-recommends nginx ufw
+EOF
+
+RUN <<EOF
+ufw allow 80/tcp
+ufw allow 443/tcp
+ufw allow 9000/tcp
+ufw --force enable
+EOF
+
+RUN <<EOF
+systemctl enable nginx
+systemctl start nginx
+EOF
 
 # Copy config nginx
 COPY --from=build /app/.nginx/nginx.conf /etc/nginx/conf.d/default.conf
 COPY --from=build /app/.nginx/get_ssl.sh /etc/nginx/get_ssl.sh
 
-RUN envsubst '${DOMAIN} ${PROXY_READ_TIMEOUT} ${PROXY_CONNECT_TIMEOUT}' < /etc/nginx/conf.d/default.conf > /etc/nginx/conf.d/default.conf
+ENV DOMAIN=${DOMAIN}
+ENV PROXY_READ_TIMEOUT=${PROXY_READ_TIMEOUT}
+ENV PROXY_CONNECT_TIMEOUT=${PROXY_CONNECT_TIMEOUT}
+
+RUN envsubst < /etc/nginx/conf.d/default.conf > /etc/nginx/conf.d/default.conf
+RUN mkdir -p /usr/share/nginx/html
+
 WORKDIR /usr/share/nginx/html
 
-# Remove default nginx static assets
-RUN rm -rf ./*
-
-
 # Copy built application files from the builder stage to the nginx html directory
-COPY --from=build /app/dist .
+COPY --from=build /app/dist /usr/share/nginx/html
 
-# Copy custom nginx configuration
-# COPY --from=builder /app/scripts/nginx.conf /etc/nginx/conf.d/default.conf
-
-# Set environment variables
-#ENV DOMAIN=${DOMAIN}
-#ENV HTML_PATH=/var/www/html
 RUN chmod +x /etc/nginx/get_ssl.sh
 # Expose port 80 and 443
 EXPOSE 80 443
 ENTRYPOINT ["/etc/nginx/get_ssl.sh"]
-# Containers run nginx with global directives and daemon off
-#CMD ["nginx", "-g", "daemon off;"]
-# Run custom entrypoint script
-# ENTRYPOINT ["/bin/sh", "-c", "envsubst < /etc/nginx/conf.d/default.conf > /etc/nginx/conf.d/temp.conf && mv /etc/nginx/conf.d/temp.conf /etc/nginx/conf.d/default.conf && nginx -g 'daemon off;'"]
