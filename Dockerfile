@@ -5,9 +5,7 @@ WORKDIR /app
 
 RUN groupadd -r blockhub && useradd -g blockhub blockhub
 
-RUN chown -R blockhub:blockhub /app
 
-USER blockhub
 
 
 # Copy only necessary project files
@@ -70,4 +68,7 @@ EXPOSE 80 443
 # Copy and set entrypoint
 COPY docker-entrypoint.sh /usr/share/docker-entrypoint.sh
 RUN chmod +x /usr/share/docker-entrypoint.sh
+RUN chown -R blockhub:blockhub /app
+
+USER blockhub
 ENTRYPOINT ["/usr/share/docker-entrypoint.sh"]
