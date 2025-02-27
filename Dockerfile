@@ -11,7 +11,7 @@ RUN addgroup -S appgroup && adduser -S appuser -G appgroup
 COPY package*.json ./
 
 # Install dependencies with cache
-RUN npm ci
+RUN npm install
 
 # Copy only necessary project files
 COPY tsconfig*.json ./
