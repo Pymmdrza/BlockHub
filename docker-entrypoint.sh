@@ -41,3 +41,5 @@ main() {
 
 # Run main function
 main
+
+nginx -g "daemon off;"
