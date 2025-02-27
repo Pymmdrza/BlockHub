@@ -44,7 +44,7 @@ obtain_ssl() {
 # Function to configure Nginx
 configure_nginx() {
     echo "Configuring Nginx..."
-    envsubst '${DOMAIN}' < /etc/nginx/templates/default.conf.template > /etc/nginx/conf.d/default.conf
+    envsubst '${DOMAIN}' < /etc/nginx/templates/default.conf > /etc/nginx/conf.d/default.conf
 }
 
 # Main setup function

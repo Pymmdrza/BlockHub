@@ -26,11 +26,14 @@ RUN apk add --no-cache \
     openssl \
     curl
 
+# Set working directory
+WORKDIR /usr/share/nginx/html
 # Copy built assets from builder stage
-COPY --from=builder /app/dist /usr/share/nginx/html
+COPY --from=builder /app/dist .
 
+WORKDIR /
 # Copy configuration files
-COPY --from=builder /app/scripts/nginx.conf /etc/nginx/templates/default.conf.template
+COPY --from=builder /app/scripts/nginx.conf /etc/nginx/templates/default.conf
 COPY --from=builder /app/scripts/setup_with_ssl.sh /usr/share/nginx/setup_with_ssl.sh
 COPY --from=builder /app/scripts/setup_without_ssl.sh /usr/share/nginx/setup_without_ssl.sh
 # Make scripts executable
