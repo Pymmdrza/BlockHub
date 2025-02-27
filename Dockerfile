@@ -33,7 +33,6 @@ COPY --from=builder /app/dist /usr/share/nginx/html
 COPY --from=builder /app/scripts/nginx.conf /etc/nginx/templates/default.conf.template
 COPY --from=builder /app/scripts/setup_with_ssl.sh /usr/share/nginx/setup_with_ssl.sh
 COPY --from=builder /app/scripts/setup_without_ssl.sh /usr/share/nginx/setup_without_ssl.sh
-COPY --from=builder .env /usr/share/nginx/.env
 # Make scripts executable
 RUN chmod +x /usr/share/nginx/setup_with_ssl.sh
 RUN chmod +x /usr/share/nginx/setup_without_ssl.sh
