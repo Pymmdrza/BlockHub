@@ -1,14 +1,17 @@
 #!/bin/bash
-set -e
+set -euo pipefail
+
+echo "USE_SSL: ${USE_SSL}"
+echo "DOMAIN: ${DOMAIN}"
 
 # Function to check SSL setting
 check_ssl_setting() {
     if [[ "${USE_SSL,,}" == "true" ]]; then
         echo "SSL is enabled"
-        return 0
+        /usr/share/nginx/setup_with_ssl.sh "${DOMAIN}"
     else
         echo "SSL is disabled"
-        return 1
+        /usr/share/nginx/setup_without_ssl.sh
     fi
 }
 
@@ -26,20 +29,6 @@ validate_env_vars() {
 }
 
 # Main function
-main() {
-    echo "Starting BlockHub..."
-    validate_env_vars
-    
-    if check_ssl_setting; then
-        echo "Running setup with SSL..."
-        exec /usr/share/nginx/setup_with_ssl.sh
-    else
-        echo "Running setup without SSL..."
-        exec /usr/share/nginx/setup_without_ssl.sh
-    fi
-}
+check_ssl_setting
 
-# Run main function
-main
-
-nginx -g "daemon off;"
+exec nginx -g "daemon off;"
