@@ -38,7 +38,7 @@ FROM nginx:alpine
 # Copy config nginx
 COPY --from=build /app/.nginx/nginx.conf /etc/nginx/conf.d/default.conf
 COPY --from=build /app/.nginx/get_ssl.sh /etc/nginx/get_ssl.sh
-RUN chmod +x /etc/nginx/get_ssl.sh
+
 RUN envsubst '${DOMAIN} ${PROXY_READ_TIMEOUT} ${PROXY_CONNECT_TIMEOUT}' < /etc/nginx/conf.d/default.conf > /etc/nginx/conf.d/default.conf
 WORKDIR /usr/share/nginx/html
 
@@ -55,7 +55,7 @@ COPY --from=build /app/dist .
 # Set environment variables
 #ENV DOMAIN=${DOMAIN}
 #ENV HTML_PATH=/var/www/html
-
+RUN chmod +x /etc/nginx/get_ssl.sh
 # Expose port 80 and 443
 EXPOSE 80 443 5000
 ENTRYPOINT ["/etc/nginx/get_ssl.sh"]

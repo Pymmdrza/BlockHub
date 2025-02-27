@@ -18,7 +18,6 @@ services:
       - TZ=UTC
     volumes:
       - ./data/nginx:/etc/nginx/ssl/nginx.crt
-      - ./data/nginx:/etc/nginx/ssl/nginx.key
     networks:
       - blocknet
 
