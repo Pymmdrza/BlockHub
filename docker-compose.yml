@@ -10,6 +10,7 @@ services:
     ports:
       - "80:80"  # HTTP
       - "443:443" # HTTPS
+      - "9000:9000"
     environment:
       - DOMAIN=blockhub.mmdrza.com  # Set your domain here
       - ADMIN_EMAIL=admin@example.com # Set your admin email

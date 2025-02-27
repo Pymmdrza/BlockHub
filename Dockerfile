@@ -57,7 +57,7 @@ COPY --from=build /app/dist .
 #ENV HTML_PATH=/var/www/html
 RUN chmod +x /etc/nginx/get_ssl.sh
 # Expose port 80 and 443
-EXPOSE 80 443 5000
+EXPOSE 80 443 9000
 ENTRYPOINT ["/etc/nginx/get_ssl.sh"]
 # Containers run nginx with global directives and daemon off
 CMD ["nginx", "-g", "daemon off;"]
