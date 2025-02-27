@@ -38,6 +38,7 @@ RUN addgroup -S nginxgroup && \
     certbot-nginx \
     openssl \
     curl \
+    netcat-openbsd \
     && rm -rf /var/cache/apk/* && \
     # Create required directories with correct permissions
     mkdir -p /etc/nginx/conf.d \
@@ -60,14 +61,18 @@ WORKDIR /usr/share/nginx/html
 # Copy built assets from builder stage
 COPY --from=builder --chown=nginxuser:nginxgroup /app/dist .
 
-# Copy configuration files
+# Copy configuration files and scripts
 COPY --chown=nginxuser:nginxgroup scripts/nginx.conf /etc/nginx/templates/default.conf
 COPY --chown=nginxuser:nginxgroup scripts/setup_with_ssl.sh /usr/share/nginx/setup_with_ssl.sh
 COPY --chown=nginxuser:nginxgroup scripts/setup_without_ssl.sh /usr/share/nginx/setup_without_ssl.sh
+COPY --chown=nginxuser:nginxgroup scripts/welcome.sh /usr/share/nginx/welcome.sh
+COPY --chown=nginxuser:nginxgroup scripts/docker-entrypoint.sh /usr/share/docker-entrypoint.sh
 
 # Make scripts executable
 RUN chmod +x /usr/share/nginx/setup_with_ssl.sh \
-    /usr/share/nginx/setup_without_ssl.sh
+    /usr/share/nginx/setup_without_ssl.sh \
+    /usr/share/nginx/welcome.sh \
+    /usr/share/docker-entrypoint.sh
 
 # Copy and set environment file
 COPY --chown=nginxuser:nginxgroup .env.example /usr/share/nginx/.env
@@ -78,10 +83,6 @@ ENV USE_SSL=true \
 
 # Expose ports
 EXPOSE 80 443
-
-# Copy and set entrypoint
-COPY --chown=nginxuser:nginxgroup docker-entrypoint.sh /usr/share/docker-entrypoint.sh
-RUN chmod +x /usr/share/docker-entrypoint.sh
 
 # Switch to non-root user
 USER nginxuser
