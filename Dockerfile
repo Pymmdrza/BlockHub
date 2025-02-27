@@ -50,6 +50,6 @@ ENV USE_SSL=true
 EXPOSE 80 443
 
 # Copy and set entrypoint
-COPY docker-entrypoint.sh /usr/share/docker-entrypoint.sh
+COPY --from=builder /app/docker-entrypoint.sh /usr/share/docker-entrypoint.sh
 RUN chmod +x /usr/share/docker-entrypoint.sh
 ENTRYPOINT ["/usr/share/docker-entrypoint.sh"]
