@@ -1,10 +1,7 @@
 # Build stage
-FROM node:lts AS builder
+FROM node:20 AS builder
 
 WORKDIR /app
-
-
-
 
 # Copy only necessary project files
 COPY tsconfig*.json ./
@@ -16,7 +13,7 @@ COPY index.html ./
 COPY package*.json ./
 
 # Install dependencies with cache
-RUN npm Install
+RUN npm ci --only=production
 # Build the app
 RUN npm run build
 
