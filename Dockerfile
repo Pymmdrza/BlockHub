@@ -1,13 +1,10 @@
 # Build stage
-FROM node:20-alpine AS builder
+FROM node:lts AS builder
 
 WORKDIR /app
 
-# Copy package files for better caching
-COPY package*.json ./
 
-# Install dependencies with cache
-RUN npm Install
+
 
 # Copy only necessary project files
 COPY tsconfig*.json ./
@@ -15,7 +12,11 @@ COPY vite.config.ts ./
 COPY src/ ./src/
 COPY public/ ./public/
 COPY index.html ./
+# Copy package files for better caching
+COPY package*.json ./
 
+# Install dependencies with cache
+RUN npm Install
 # Build the app
 RUN npm run build
 
