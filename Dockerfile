@@ -30,7 +30,7 @@ FROM ubuntu:20.04 AS runner
 
 RUN <<EOF
 apt-get update
-apt-get install -y --no-install-recommends nginx type
+apt-get install -y --no-install-recommends nginx
 EOF
 
 # Copy config nginx
