@@ -8,21 +8,25 @@ services:
     container_name: blockhub
     restart: unless-stopped
     ports:
-      - "80:80"  # HTTP
-      - "443:443" # HTTPS
-      - "9000:9000"
-    environment:
-      - DOMAIN=blockhub.mmdrza.com  # Set your domain here
-      - ADMIN_EMAIL=admin@example.com # Set your admin email
-      - VITE_API_BASE_URL=/api/v2
-      - TZ=UTC
+      - "80:80"
+      - "443:443"
     volumes:
-      - ./data/nginx:/etc/nginx/ssl/nginx.crt
+      - ./nginx.conf:/etc/nginx/templates/default.conf.template:ro
+      - certbot-etc:/etc/letsencrypt
+      - certbot-var:/var/lib/letsencrypt
+      - webroot:/var/www/certbot
+    environment:
+      - DOMAIN=${DOMAIN}
+      - ADMIN_EMAIL=${ADMIN_EMAIL}
+      - USE_SSL=${USE_SSL}
     networks:
-      - blocknet
-    env_file:
-      - .env
+      - blockhub_network
+
+volumes:
+  certbot-etc:
+  certbot-var:
+  webroot:
 
 networks:
-  blocknet:
+  blockhub_network:
     driver: bridge

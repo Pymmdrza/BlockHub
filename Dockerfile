@@ -1,54 +1,55 @@
-# Stage 1: Build Stage
-FROM node:lts AS build
+# Build stage
+FROM node:20-alpine AS builder
 
 WORKDIR /app
 
-# Copy package files and install dependencies
+# Copy package files
 COPY package*.json ./
+
+# Install dependencies
 RUN npm install
 
-# Copy entire project and build the app
-COPY . /app
+# Copy project files
+COPY . .
 
-ENV PORT=9000
-
+# Build the app
 RUN npm run build
 
+# Production stage
+FROM nginx:alpine
+
+# Install required packages
+RUN apk add --no-cache \
+    bash \
+    certbot \
+    certbot-nginx \
+    openssl \
+    curl
+
+# Copy built assets from builder stage
+COPY --from=builder /app/dist /usr/share/nginx/html
+
+# Copy configuration files
+COPY --from=builder /app/scripts/nginx.conf /etc/nginx/templates/default.conf.template
+COPY --from=builder /app/scripts/setup_with_ssl.sh /usr/share/nginx/setup_with_ssl.sh
+COPY --from=builder /app/scripts/setup_without_ssl.sh /usr/share/nginx/setup_without_ssl.sh
+COPY --from=builder .env /usr/share/nginx/.env
+# Make scripts executable
+RUN chmod +x /usr/share/nginx/setup_with_ssl.sh
+RUN chmod +x /usr/share/nginx/setup_without_ssl.sh
+
+# Create required directories
 RUN <<EOF
-apt-get update
-apt-get install -y --no-install-recommends git
+mkdir -p /etc/nginx/conf.d && mkdir -p /var/www/certbot && mkdir -p /etc/letsencrypt
 EOF
 
-RUN <<EOF
-useradd -s /bin/bash -m vscode
-groupadd docker
-usermod -aG docker vscode
-EOF
+# Set environment variables
+ENV USE_SSL=true
 
-# 2. For Nginx setup
-FROM ubuntu:20.04 AS runner
-
-RUN <<EOF
-apt-get update
-apt-get install -y --no-install-recommends nginx gettext
-EOF
-
-# Copy config nginx
-COPY --from=build /app/.nginx/nginx.conf /etc/nginx/conf.d/default.conf
-COPY --from=build /app/.nginx/get_ssl.sh /etc/nginx/get_ssl.sh
-
-ENV DOMAIN=${DOMAIN}
-ENV PROXY_READ_TIMEOUT=${PROXY_READ_TIMEOUT}
-ENV PROXY_CONNECT_TIMEOUT=${PROXY_CONNECT_TIMEOUT}
-
-RUN envsubst < /etc/nginx/conf.d/default.conf > /etc/nginx/conf.d/default.conf
-
-WORKDIR /usr/share/nginx/html
-
-# Copy built application files from the builder stage to the nginx html directory
-COPY --from=build /app/dist /var/www/html
-
-RUN chmod +x /etc/nginx/get_ssl.sh
-# Expose port 80 and 443
+# Expose ports
 EXPOSE 80 443
-ENTRYPOINT ["/etc/nginx/get_ssl.sh"]
+
+# Copy and set entrypoint
+COPY docker-entrypoint.sh /usr/share/docker-entrypoint.sh
+RUN chmod +x /usr/share/docker-entrypoint.sh
+ENTRYPOINT ["/usr/share/docker-entrypoint.sh"]

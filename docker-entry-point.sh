@@ -1,12 +1,43 @@
-#!/bin/sh
+#!/bin/bash
 set -e
 
-# Replace environment variables in nginx config
-envsubst '${DOMAIN} ${PROXY_READ_TIMEOUT} ${PROXY_CONNECT_TIMEOUT}' < /etc/nginx/templates/default.conf.template > /etc/nginx/conf.d/default.conf
+# Function to check SSL setting
+check_ssl_setting() {
+    if [[ "${USE_SSL,,}" == "true" ]]; then
+        echo "SSL is enabled"
+        return 0
+    else
+        echo "SSL is disabled"
+        return 1
+    fi
+}
 
-# Update nginx worker settings
-sed -i "s/worker_processes.*$/worker_processes ${NGINX_WORKER_PROCESSES};/" /etc/nginx/nginx.conf
-sed -i "s/worker_connections.*$/worker_connections ${NGINX_WORKER_CONNECTIONS};/" /etc/nginx/nginx.conf
+# Validate required environment variables
+validate_env_vars() {
+    if [[ -z "$DOMAIN" ]]; then
+        echo "Error: DOMAIN environment variable is not set"
+        exit 1
+    fi
 
-# Start nginx
-exec "$@"
+    if [[ -z "$ADMIN_EMAIL" ]]; then
+        echo "Error: ADMIN_EMAIL environment variable is not set"
+        exit 1
+    fi
+}
+
+# Main function
+main() {
+    echo "Starting BlockHub..."
+    validate_env_vars
+    
+    if check_ssl_setting; then
+        echo "Running setup with SSL..."
+        exec /usr/share/nginx/setup_with_ssl.sh
+    else
+        echo "Running setup without SSL..."
+        exec /usr/share/nginx/setup_without_ssl.sh
+    fi
+}
+
+# Run main function
+main
