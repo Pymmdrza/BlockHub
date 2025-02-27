@@ -21,7 +21,7 @@ RUN npm run build
 FROM nginx:alpine-slim
 
 
-RUN groupadd -r blockhub && usermod -aG blockhub blockhub
+RUN groupadd -r blockhub && useradd -g blockhub blockhub
 
 
 # Install required packages
