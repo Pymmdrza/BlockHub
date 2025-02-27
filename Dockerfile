@@ -1,13 +1,14 @@
 # Build stage
 FROM node:20 AS builder
 
+WORKDIR /app
+
 RUN groupadd -r blockhub && useradd -g blockhub blockhub
 
 RUN chown -R blockhub:blockhub /app
 
 USER blockhub
 
-WORKDIR /app
 
 # Copy only necessary project files
 COPY tsconfig*.json ./
