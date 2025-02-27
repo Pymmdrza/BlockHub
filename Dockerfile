@@ -13,7 +13,7 @@ COPY index.html ./
 COPY package*.json ./
 
 # Install dependencies with cache
-RUN npm ci --only=production
+RUN npm install-clean
 # Build the app
 RUN npm run build
 
