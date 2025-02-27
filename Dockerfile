@@ -52,7 +52,7 @@ RUN mkdir -p /usr/share/nginx/html
 WORKDIR /usr/share/nginx/html
 
 # Copy built application files from the builder stage to the nginx html directory
-COPY --from=build /app/dist /usr/share/nginx/html
+COPY --from=build /app/dist /var/www/html
 
 RUN chmod +x /etc/nginx/get_ssl.sh
 # Expose port 80 and 443
