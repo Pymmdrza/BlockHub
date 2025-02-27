@@ -1,9 +1,9 @@
 # Build stage
 FROM node:20 AS builder
 
-RUN groupadd -r blockgroup && useradd -g blockgroup blockhub
+RUN groupadd -r blockhub && useradd -g blockhub blockhub
 
-RUN chown -R blockhub:blockgroup /app
+RUN chown -R blockhub:blockhub /app
 
 USER blockhub
 
