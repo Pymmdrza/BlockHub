@@ -33,11 +33,6 @@ apt-get update
 apt-get install -y --no-install-recommends nginx
 EOF
 
-RUN <<EOF
-systemctl enable nginx
-systemctl start nginx
-EOF
-
 # Copy config nginx
 COPY --from=build /app/.nginx/nginx.conf /etc/nginx/conf.d/default.conf
 COPY --from=build /app/.nginx/get_ssl.sh /etc/nginx/get_ssl.sh
