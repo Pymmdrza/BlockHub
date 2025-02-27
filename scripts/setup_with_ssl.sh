@@ -4,7 +4,7 @@
 set -e
 
 # Load environment variables
-source .env
+source /usr/share/nginx/.env
 
 # Function to validate domain
 validate_domain() {
