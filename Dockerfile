@@ -1,6 +1,12 @@
 # Build stage
 FROM node:20 AS builder
 
+RUN groupadd -r blockgroup && useradd -g blockgroup blockhub
+
+RUN chown -R blockhub:blockgroup /app
+
+USER blockhub
+
 WORKDIR /app
 
 # Copy only necessary project files
