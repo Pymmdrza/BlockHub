@@ -20,6 +20,8 @@ services:
       - ./data/nginx:/etc/nginx/ssl/nginx.crt
     networks:
       - blocknet
+    env_file:
+      - .env
 
 networks:
   blocknet:
