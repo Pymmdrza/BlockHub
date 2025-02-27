@@ -30,7 +30,7 @@ FROM ubuntu:20.04 AS runner
 
 RUN <<EOF
 apt-get update
-apt-get install -y --no-install-recommends nginx
+apt-get install -y --no-install-recommends nginx type
 EOF
 
 # Copy config nginx
@@ -41,7 +41,7 @@ ENV DOMAIN=${DOMAIN}
 ENV PROXY_READ_TIMEOUT=${PROXY_READ_TIMEOUT}
 ENV PROXY_CONNECT_TIMEOUT=${PROXY_CONNECT_TIMEOUT}
 
-RUN envsubst < /etc/nginx/conf.d/default.conf > /etc/nginx/conf.d/default.conf
+RUN source ~/.bashrc && envsubst < /etc/nginx/conf.d/default.conf > /etc/nginx/conf.d/default.conf
 RUN mkdir -p /usr/share/nginx/html
 
 WORKDIR /usr/share/nginx/html
