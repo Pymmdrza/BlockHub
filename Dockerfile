@@ -49,7 +49,8 @@ EOF
 ENV USE_SSL=true
 
 # Expose ports
-EXPOSE 9000
+EXPOSE 80
+EXPOSE 443
 
 # Copy and set entrypoint
 COPY --from=builder /app/docker-entrypoint.sh /usr/share/docker-entrypoint.sh
