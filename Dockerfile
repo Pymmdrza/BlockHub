@@ -3,20 +3,24 @@ FROM node:20-alpine AS builder
 
 WORKDIR /app
 
-# Copy package files
+# Copy package files for better caching
 COPY package*.json ./
 
-# Install dependencies
-RUN npm install
+# Install dependencies with cache
+RUN npm ci
 
-# Copy project files
-COPY . .
+# Copy only necessary project files
+COPY tsconfig*.json ./
+COPY vite.config.ts ./
+COPY src/ ./src/
+COPY public/ ./public/
+COPY index.html ./
 
 # Build the app
 RUN npm run build
 
 # Production stage
-FROM nginx:alpine
+FROM nginx:alpine-slim
 
 # Install required packages
 RUN apk add --no-cache \
@@ -24,38 +28,41 @@ RUN apk add --no-cache \
     certbot \
     certbot-nginx \
     openssl \
-    curl
+    curl \
+    && rm -rf /var/cache/apk/*
 
 # Set working directory
 WORKDIR /usr/share/nginx/html
+
 # Copy built assets from builder stage
 COPY --from=builder /app/dist .
 
 WORKDIR /
-# Copy configuration files
-COPY --from=builder /app/scripts/nginx.conf /etc/nginx/templates/default.conf
-COPY --from=builder /app/scripts/setup_with_ssl.sh /usr/share/nginx/setup_with_ssl.sh
-COPY --from=builder /app/scripts/setup_without_ssl.sh /usr/share/nginx/setup_without_ssl.sh
-# Make scripts executable
-RUN chmod +x /usr/share/nginx/setup_with_ssl.sh
-RUN chmod +x /usr/share/nginx/setup_without_ssl.sh
 
-COPY .env.example /usr/share/nginx/.env.example
-RUN mv /usr/share/nginx/.env.example /usr/share/nginx/.env
+# Copy configuration files
+COPY scripts/nginx.conf /etc/nginx/templates/default.conf
+COPY scripts/setup_with_ssl.sh /usr/share/nginx/setup_with_ssl.sh
+COPY scripts/setup_without_ssl.sh /usr/share/nginx/setup_without_ssl.sh
+
+# Make scripts executable
+RUN chmod +x /usr/share/nginx/setup_with_ssl.sh \
+    /usr/share/nginx/setup_without_ssl.sh
+
+COPY .env.example /usr/share/nginx/.env
 
 # Create required directories
-RUN <<EOF
-mkdir -p /etc/nginx/conf.d && mkdir -p /var/www/certbot && mkdir -p /etc/letsencrypt
-EOF
+RUN mkdir -p /etc/nginx/conf.d \
+    /var/www/certbot \
+    /etc/letsencrypt
 
 # Set environment variables
-ENV USE_SSL=true
+ENV USE_SSL=true \
+    NODE_ENV=production
 
 # Expose ports
-EXPOSE 80
-EXPOSE 443
+EXPOSE 80 443
 
 # Copy and set entrypoint
-COPY --from=builder /app/docker-entrypoint.sh /usr/share/docker-entrypoint.sh
+COPY docker-entrypoint.sh /usr/share/docker-entrypoint.sh
 RUN chmod +x /usr/share/docker-entrypoint.sh
 ENTRYPOINT ["/usr/share/docker-entrypoint.sh"]

@@ -5,10 +5,12 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+      args:
+        - NODE_ENV=${NODE_ENV:-production}
     container_name: blockhub
     restart: unless-stopped
     ports:
-      - "9000:9000"
+      - "${PORT:-9000}:9000"
       - "80:80"
       - "443:443"
     volumes:
@@ -16,13 +18,26 @@ services:
       - certbot-etc:/etc/letsencrypt
       - certbot-var:/var/lib/letsencrypt
       - webroot:/var/www/certbot
+      - ./logs:/var/log/nginx
     environment:
-      - DOMAIN=${DOMAIN}
-      - ADMIN_EMAIL=${ADMIN_EMAIL}
-      - USE_SSL=${USE_SSL}
-      - VITE_API_BASE_URL=/api/v2
+      - DOMAIN=${DOMAIN:-localhost}
+      - ADMIN_EMAIL=${ADMIN_EMAIL:-admin@localhost}
+      - USE_SSL=${USE_SSL:-false}
+      - NODE_ENV=${NODE_ENV:-production}
+      - VITE_API_BASE_URL=${VITE_API_BASE_URL:-/api/v2}
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:80"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
     networks:
       - blockhub_network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
 
 volumes:
   certbot-etc:

@@ -1,116 +1,78 @@
-# Block Hub 
+# BlockHub
 
-The simplest and most modern Bitcoin transaction explorer
+## 🚀 راه‌اندازی سریع
 
+برای راه‌اندازی سریع پروژه، فقط کافیست دستورات زیر را اجرا کنید:
 
-![blockhub Bitcoin explorer backend service](/.github/logo-header.png)
+```bash
+git clone https://github.com/your-username/blockhub.git
+cd blockhub
+docker compose up -d
+```
 
-Backend Service for index Bitcoin Address Wallet and index Transaction , Index Block + Show Real-Time All New Transaction's
+پروژه به صورت پیش‌فرض روی پورت 9000 در دسترس خواهد بود: http://localhost:9000
 
-![screenshot from blockhub bitcoin backend service explorer](/.github/Screenshot_main.png)
+## 🔧 تنظیمات
 
+### حالت ساده (بدون SSL)
+برای اجرا در حالت ساده، نیازی به تنظیمات خاصی نیست. همه چیز به صورت پیش‌فرض تنظیم شده است.
 
-- Bitcoin Real Time New Transaction's
-- Bitcoin Transaction Check
-- Bitcoin Address Wallet Check
-- Bitcoin Block Data
-- Bitcoin Datasets dump
+### حالت پیشرفته (با SSL)
+برای استفاده از SSL و HTTPS، فقط کافیست متغیرهای محیطی زیر را تنظیم کنید:
 
+```env
+DOMAIN=your-domain.com
+ADMIN_EMAIL=your-email@example.com
+USE_SSL=true
+```
 
-## Install and usage
+می‌توانید این متغیرها را:
+1. در پنل مدیریت داکر خود تنظیم کنید
+2. یا فایل `.env` ایجاد کنید
+3. یا مستقیماً در خط فرمان تنظیم کنید:
+```bash
+DOMAIN=your-domain.com ADMIN_EMAIL=your-email@example.com USE_SSL=true docker compose up -d
+```
 
-> [!NOTE]
-> First Change and Replace Your Domain or Sub domain + Email on `.env` [Here](../.env)
+## 🌐 پورت‌های پیش‌فرض
 
-A modern, real-time Bitcoin blockchain explorer built with React and TypeScript.
+- `9000`: پورت اصلی برنامه
+- `80`: پورت HTTP
+- `443`: پورت HTTPS (در صورت فعال بودن SSL)
 
-## Quick Start with Docker
+## 📝 متغیرهای محیطی
 
-The easiest way to run BlockHub is using Docker. Make sure you have [Docker](https://docs.docker.com/get-docker/) and [Docker Compose](https://docs.docker.com/compose/install/) installed on your system.
+| متغیر | پیش‌فرض | توضیحات |
+|--------|---------|-----------|
+| `DOMAIN` | localhost | دامنه سایت |
+| `ADMIN_EMAIL` | admin@localhost | ایمیل مدیر (برای SSL) |
+| `USE_SSL` | false | فعال‌سازی SSL |
+| `NODE_ENV` | production | محیط اجرایی |
+| `PORT` | 9000 | پورت اصلی برنامه |
+| `VITE_API_BASE_URL` | /api/v2 | آدرس پایه API |
 
-### One-Command Setup (Recommended)
+## 🔒 SSL و HTTPS
 
-1. Clone the repository:
-   ```bash
-   git clone https://github.com/Pymmdrza/BlockHub.git
-   cd BlockHub
-   ```
+SSL به صورت خودکار با Let's Encrypt پیکربندی می‌شود. فقط کافیست:
+1. دامنه خود را به IP سرور متصل کنید
+2. متغیرهای `DOMAIN`، `ADMIN_EMAIL` و `USE_SSL=true` را تنظیم کنید
+3. کانتینر را اجرا کنید
 
-2. Run the setup command:
-   ```bash
-   docker-compose up --build
-   ```
-   
-   This will:
-   - Create a `.env` file from `.env.example`
-   - Make all scripts executable
-   - Install dependencies
-   - Set up the environment
+همه چیز به صورت خودکار تنظیم خواهد شد.
 
-3. Update the `.env` file with your settings:
-   ```env
-   DOMAIN=your-domain.com
-   ADMIN_EMAIL=your-email@domain.com
-   USE_SSL=true
-   ```
+## 🛠 پنل‌های تحت وب
 
-4. Start the application:
-   ```bash
-   make deploy
-   ```
+اگر از پنل‌های تحت وب مدیریت داکر استفاده می‌کنید:
+1. آدرس مخزن گیت را وارد کنید
+2. متغیرهای محیطی مورد نیاز را تنظیم کنید
+3. پورت‌های 9000، 80 و 443 را باز کنید
 
-### Manual Setup
+همین! نیازی به تنظیمات دیگری نیست.
 
-If you prefer to set up manually:
+## 📊 لاگ‌ها
 
-1. Copy `.env.example` to `.env`:
-   ```bash
-   cp .env.example .env
-   ```
+لاگ‌ها در پوشه `logs` ذخیره می‌شوند و به صورت خودکار مدیریت می‌شوند (حداکثر 3 فایل 10 مگابایتی).
 
-2. Edit `.env` with your settings
+## 🤝 مشارکت
 
-3. Build and start:
-   ```bash
-   docker-compose up -d --build
-   ```
-
-## Available Make Commands
-
-- `make help` - Show all available commands
-- `make init` - Initialize the project
-- `make deploy` - Deploy the application
-- `make docker-logs` - View container logs
-- `make docker-restart` - Restart containers
-- `make docker-clean` - Clean Docker artifacts
-
-## Features
-
-- Real-time Bitcoin price tracking
-- Live transaction monitoring
-- Address balance and transaction history
-- Transaction details and analysis
-- Dark mode optimized interface
-- Responsive design
-
-## Environment Variables
-
-The following environment variables can be configured in your `.env` file:
-
-- `DOMAIN`: Your domain name (e.g., blockhub.example.com)
-- `ADMIN_EMAIL`: Your email address for SSL certificates
-- `USE_SSL`: Set to `true` to enable SSL/HTTPS, `false` otherwise
-- `VITE_API_BASE_URL`: API base URL (default: /api/v2)
-
-## Contributing
-
-Contributions are welcome! Please feel free to submit a Pull Request.
-
-## License
-
-This project is open source and available under the [MIT License](LICENSE).
-
-## Author
-
-[Pymmdrza](https://github.com/Pymmdrza)
-
+از مشارکت شما استقبال می‌کنیم! لطفاً قبل از ارسال Pull Request، تست‌های خود را اجرا کنید.
