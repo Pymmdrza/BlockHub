@@ -3,11 +3,6 @@ FROM node:20 AS builder
 
 WORKDIR /app
 
-RUN groupadd -r blockhub && useradd -g blockhub blockhub
-
-
-
-
 # Copy only necessary project files
 COPY tsconfig*.json ./
 COPY vite.config.ts ./
@@ -24,6 +19,10 @@ RUN npm run build
 
 # Production stage
 FROM nginx:alpine-slim
+
+
+RUN groupadd -r blockhub && usermod -aG blockhub blockhub
+
 
 # Install required packages
 RUN apk add --no-cache \
@@ -68,7 +67,7 @@ EXPOSE 80 443
 # Copy and set entrypoint
 COPY docker-entrypoint.sh /usr/share/docker-entrypoint.sh
 RUN chmod +x /usr/share/docker-entrypoint.sh
-RUN chown -R blockhub:blockhub /app
+RUN chown -R blockhub:blockhub /usr/share
 
 USER blockhub
 ENTRYPOINT ["/usr/share/docker-entrypoint.sh"]
