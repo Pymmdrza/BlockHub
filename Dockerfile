@@ -40,6 +40,9 @@ COPY --from=builder /app/scripts/setup_without_ssl.sh /usr/share/nginx/setup_wit
 RUN chmod +x /usr/share/nginx/setup_with_ssl.sh
 RUN chmod +x /usr/share/nginx/setup_without_ssl.sh
 
+COPY .env.example /usr/share/nginx/.env.example
+RUN mv /usr/share/nginx/.env.example /usr/share/nginx/.env
+
 # Create required directories
 RUN <<EOF
 mkdir -p /etc/nginx/conf.d && mkdir -p /var/www/certbot && mkdir -p /etc/letsencrypt
