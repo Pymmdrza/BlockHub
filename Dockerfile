@@ -7,7 +7,7 @@ WORKDIR /app
 COPY package*.json ./
 
 # Install dependencies with cache
-RUN npm ci
+RUN npm Install
 
 # Copy only necessary project files
 COPY tsconfig*.json ./
