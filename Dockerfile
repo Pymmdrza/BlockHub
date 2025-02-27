@@ -13,7 +13,7 @@ COPY index.html ./
 COPY package*.json ./
 
 # Install dependencies with cache
-RUN npm install-clean
+RUN npm install
 # Build the app
 RUN npm run build
 
