@@ -76,4 +76,4 @@ main() {
 main
 
 # run nginx
-exec "$@"
+nginx -g "daemon off;"
