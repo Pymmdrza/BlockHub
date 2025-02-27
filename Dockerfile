@@ -30,14 +30,7 @@ FROM ubuntu:20.04 AS runner
 
 RUN <<EOF
 apt-get update
-apt-get install -y --no-install-recommends nginx ufw
-EOF
-
-RUN <<EOF
-ufw allow 80/tcp
-ufw allow 443/tcp
-ufw allow 9000/tcp
-ufw --force enable
+apt-get install -y --no-install-recommends nginx
 EOF
 
 RUN <<EOF
