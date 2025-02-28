@@ -1,14 +1,23 @@
 import React, { useState } from 'react';
-import { BrowserRouter as Router, Routes, Route, Link, useNavigate } from 'react-router-dom';
+import { HashRouter as Router, Routes, Route, Link, useNavigate } from 'react-router-dom';
 import { Home } from './pages/Home';
 import { Address } from './pages/Address';
 import { Transaction } from './pages/Transaction';
 import { LiveTransactions } from './pages/LiveTransactions';
+import { NetworkStats } from './pages/NetworkStats';
+import { MempoolExplorer } from './pages/MempoolExplorer';
+import { BlockExplorer } from './pages/BlockExplorer';
+import { BlockDetails } from './pages/BlockDetails';
 import { About } from './pages/About';
 import { Datasets } from './pages/Datasets';
 import { MainNav } from './components/MainNav';
 import { Shield } from 'lucide-react';
-import { isBitcoinAddress, isTransactionId } from './utils/validation';
+import { isBitcoinAddress, isTransactionId, isBlockHash, isBlockHeight } from './utils/validation';
+import { MarketCharts } from './pages/charts/MarketCharts';
+import { BlockchainCharts } from './pages/charts/BlockchainCharts';
+import { MiningCharts } from './pages/charts/MiningCharts';
+import { NetworkCharts } from './pages/charts/NetworkCharts';
+import { ChartExplorer } from './pages/charts/ChartExplorer';
 
 function HeaderSearch() {
   const navigate = useNavigate();
@@ -20,14 +29,32 @@ function HeaderSearch() {
     const trimmedQuery = query.trim();
     if (!trimmedQuery) return;
 
-    if (trimmedQuery.length < 64) {
-      if (isBitcoinAddress(trimmedQuery)) {
-        navigate(`/address/${trimmedQuery}`);
-      }
-    } else {
-      if (isTransactionId(trimmedQuery)) {
-        navigate(`/tx/${trimmedQuery}`);
-      }
+    // Check if it's a block height (numeric)
+    if (/^\d+$/.test(trimmedQuery) && isBlockHeight(parseInt(trimmedQuery, 10))) {
+      navigate(`/block/${trimmedQuery}`);
+      setQuery('');
+      return;
+    }
+
+    // Check if it's a block hash
+    if (isBlockHash(trimmedQuery)) {
+      navigate(`/block/${trimmedQuery}`);
+      setQuery('');
+      return;
+    }
+
+    // Check if it's a Bitcoin address
+    if (isBitcoinAddress(trimmedQuery)) {
+      navigate(`/address/${trimmedQuery}`);
+      setQuery('');
+      return;
+    }
+
+    // Check if it's a transaction ID
+    if (isTransactionId(trimmedQuery)) {
+      navigate(`/tx/${trimmedQuery}`);
+      setQuery('');
+      return;
     }
     
     setQuery('');
@@ -40,7 +67,7 @@ function HeaderSearch() {
           type="text"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder="Search address or transaction ID..."
+          placeholder="Search address, transaction, block hash or height..."
           className="w-full px-4 py-2 bg-[#0B1017] border border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 text-sm text-gray-200 placeholder-gray-500"
         />
       </div>
@@ -71,14 +98,25 @@ function App() {
           </div>
         </nav>
 
-        <main className="container mx-auto py-8 px-4 flex-grow">
+        <main className="flex-grow">
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/address/:address" element={<Address />} />
             <Route path="/tx/:txid" element={<Transaction />} />
             <Route path="/live" element={<LiveTransactions />} />
+            <Route path="/network" element={<NetworkStats />} />
+            <Route path="/mempool" element={<MempoolExplorer />} />
+            <Route path="/blocks" element={<BlockExplorer />} />
+            <Route path="/block/:hashOrHeight" element={<BlockDetails />} />
             <Route path="/datasets" element={<Datasets />} />
             <Route path="/about" element={<About />} />
+            
+            {/* Charts routes */}
+            <Route path="/charts" element={<ChartExplorer />} />
+            <Route path="/charts/market" element={<MarketCharts />} />
+            <Route path="/charts/blockchain" element={<BlockchainCharts />} />
+            <Route path="/charts/mining" element={<MiningCharts />} />
+            <Route path="/charts/network" element={<NetworkCharts />} />
           </Routes>
         </main>
 

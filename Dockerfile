@@ -1,94 +1,45 @@
-# Build stage
+# Stage 1: Build Stage
 FROM node:20-alpine AS builder
 
-# Create app directory and set permissions
 WORKDIR /app
 
-# Add non-root user
-RUN addgroup -S appgroup && adduser -S appuser -G appgroup
-
-# Copy package files for better caching
+# Copy package files and install dependencies
 COPY package*.json ./
+RUN npm ci
 
-# Install dependencies with cache
-RUN npm install
-
-# Copy only necessary project files
-COPY tsconfig*.json ./
-COPY vite.config.ts ./
-COPY src/ ./src/
-COPY public/ ./public/
-COPY index.html ./
+# Copy the rest of the application code
+COPY . .
 
 # Build the app
-RUN npm run build && \
-    # Set correct ownership
-    chown -R appuser:appgroup /app
+RUN npm run build
 
-# Production stage
-FROM nginx:alpine-slim
+# Stage 2: Production Stage
+FROM node:20-alpine
 
-# Add non-root user for nginx
-RUN addgroup -S nginxgroup && \
-    adduser -S nginxuser -G nginxgroup && \
-    # Install required packages
-    apk add --no-cache \
-    bash \
-    certbot \
-    certbot-nginx \
-    openssl \
-    curl \
-    netcat-openbsd \
-    && rm -rf /var/cache/apk/* && \
-    # Create required directories with correct permissions
-    mkdir -p /etc/nginx/conf.d \
-        /var/www/certbot \
-        /etc/letsencrypt \
-        /var/log/nginx \
-        /var/cache/nginx \
-        /var/run && \
-    chown -R nginxuser:nginxgroup \
-        /etc/nginx \
-        /var/www/certbot \
-        /etc/letsencrypt \
-        /var/log/nginx \
-        /var/cache/nginx \
-        /var/run
+WORKDIR /app
 
-# Set working directory
-WORKDIR /usr/share/nginx/html
+# Install production dependencies only
+COPY package*.json ./
+RUN npm ci --omit=dev
 
-# Copy built assets from builder stage
-COPY --from=builder --chown=nginxuser:nginxgroup /app/dist .
+# Copy built application from the builder stage
+COPY --from=builder /app/dist ./dist
+COPY --from=builder /app/server ./server
 
-# Copy configuration files and scripts
-COPY --chown=nginxuser:nginxgroup scripts/nginx.conf /etc/nginx/templates/default.conf
-COPY --chown=nginxuser:nginxgroup scripts/setup_with_ssl.sh /usr/share/nginx/setup_with_ssl.sh
-COPY --chown=nginxuser:nginxgroup scripts/setup_without_ssl.sh /usr/share/nginx/setup_without_ssl.sh
-COPY --chown=nginxuser:nginxgroup scripts/welcome.sh /usr/share/nginx/welcome.sh
-COPY --chown=nginxuser:nginxgroup scripts/docker-entrypoint.sh /usr/share/docker-entrypoint.sh
+# Create directory for health checks
+RUN mkdir -p /app/dist/health
+RUN echo "OK" > /app/dist/health/status
 
-# Make scripts executable
-RUN chmod +x /usr/share/nginx/setup_with_ssl.sh \
-    /usr/share/nginx/setup_without_ssl.sh \
-    /usr/share/nginx/welcome.sh \
-    /usr/share/docker-entrypoint.sh
-
-# Copy and set environment file
-COPY --chown=nginxuser:nginxgroup .env.example /usr/share/nginx/.env
+# Expose port
+EXPOSE 80
 
 # Set environment variables
-ENV USE_SSL=true \
-    NODE_ENV=production
+ENV NODE_ENV=production \
+    PORT=80
 
-# Expose ports
-EXPOSE 80 443
-
-# Switch to non-root user
-USER nginxuser
-
-# Set healthcheck
+# Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD curl -f http://localhost:80/ || exit 1
+    CMD wget -q -O- http://localhost/health/status || exit 1
 
-ENTRYPOINT ["/usr/share/docker-entrypoint.sh"]
+# Start the server
+CMD ["node", "server/index.js"]

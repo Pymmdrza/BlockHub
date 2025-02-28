@@ -1,137 +1,145 @@
-# BlockHub - HTTPS Configuration Guide
+# BlockHub - Bitcoin Blockchain Explorer
 
-This guide provides instructions on how to enable and configure HTTPS for the BlockHub application. By following these steps, you can ensure secure communication between your application and its users.
+![BlockHub Logo](https://img.shields.io/badge/BlockHub-Bitcoin%20Explorer-orange)
+![Version](https://img.shields.io/badge/version-1.0.3-blue)
+![License](https://img.shields.io/badge/license-MIT-green)
 
----
+BlockHub is a modern, real-time Bitcoin blockchain explorer designed to provide comprehensive insights into Bitcoin transactions, addresses, and network activity. The platform offers a user-friendly interface for exploring the Bitcoin blockchain, with features including live transaction monitoring, detailed address analysis, and access to extensive blockchain datasets.
 
-## Prerequisites
+## 🚀 Features
 
-1. **Docker and Docker Compose**: Ensure that Docker and Docker Compose are installed on your system.
-2. **OpenSSL**: OpenSSL is required to generate self-signed SSL certificates for development environments.
+- **Real-time Transaction Monitoring**: Watch Bitcoin transactions as they happen
+- **Address Explorer**: View comprehensive details about any Bitcoin address
+- **Block Explorer**: Browse the latest blocks and their contents
+- **Mempool Explorer**: Monitor unconfirmed transactions and fee estimates
+- **Network Statistics**: Track Bitcoin network metrics in real-time
+- **Datasets**: Access to extensive Bitcoin blockchain datasets
+- **Dark Mode Optimized**: Beautiful dark interface for comfortable viewing
+- **Mobile Responsive**: Fully responsive design for all devices
 
----
+## 🛠️ Technology Stack
 
-## Steps to Enable HTTPS
+- **Frontend**: React with TypeScript
+- **Styling**: Tailwind CSS for modern, responsive styling
+- **State Management**: React Hooks
+- **Icons**: Lucide React
+- **Charts**: Recharts for data visualization
+- **API Integration**: Blockchain.com API
+- **Containerization**: Docker for easy deployment
 
-### 1. Generate SSL Certificates
+## 📋 Prerequisites
 
-For development purposes, you can generate self-signed SSL certificates using the provided script.
+- Docker
+- Docker Compose
 
-1. Navigate to the `scripts` directory:
+## 🔧 Installation
+
+### Quick Start with Docker
+
+1. Clone the repository:
    ```bash
-   cd scripts
+   git clone https://github.com/yourusername/blockhub.git
+   cd blockhub
    ```
 
-2. Run the `generate-ssl-cert.sh` script:
+2. Run the setup script:
    ```bash
-   ./generate-ssl-cert.sh
+   chmod +x docker-setup.sh
+   ./docker-setup.sh
    ```
 
-   This will generate the following files in the `certs` directory:
-   - `self-signed.crt`: The SSL certificate.
-   - `self-signed.key`: The private key.
+3. Access BlockHub at `http://localhost` (or the domain/port you configured)
 
-3. Move the generated certificates to the appropriate directory:
+### Manual Setup with Docker Compose
+
+1. Clone the repository:
    ```bash
-   mv certs/self-signed.crt /etc/ssl/certs/
-   mv certs/self-signed.key /etc/ssl/private/
+   git clone https://github.com/yourusername/blockhub.git
+   cd blockhub
    ```
 
----
+2. Create a `.env` file with your configuration:
+   ```bash
+   cp .env.example .env
+   ```
 
-### 2. Update Environment Variables
+3. Build and start the containers:
+   ```bash
+   docker-compose up -d
+   ```
 
-Update the `.env` file with the following SSL configuration:
+4. Access BlockHub at `http://localhost` (or the domain/port you configured)
 
-```env
-# SSL Configuration
-SSL_CERTIFICATE=/etc/ssl/certs/self-signed.crt
-SSL_CERTIFICATE_KEY=/etc/ssl/private/self-signed.key
+### Production Deployment with SSL
+
+1. Set up your domain and ensure it points to your server
+
+2. Run the SSL setup script:
+   ```bash
+   chmod +x ssl-setup.sh
+   ./ssl-setup.sh yourdomain.com
+   ```
+
+3. Start BlockHub with production settings:
+   ```bash
+   docker-compose -f docker-compose.prod.yml up -d
+   ```
+
+4. Access BlockHub at `https://yourdomain.com`
+
+## 🌐 Environment Variables
+
+BlockHub can be configured using the following environment variables:
+
+| Variable | Description | Default |
+|----------|-------------|---------|
+| DOMAIN | Domain name for the application | localhost |
+| PORT | Port to run the application on | 80 |
+| NGINX_WORKER_PROCESSES | Number of Nginx worker processes | auto |
+| NGINX_WORKER_CONNECTIONS | Maximum connections per worker | 1024 |
+| PROXY_READ_TIMEOUT | Proxy read timeout in seconds | 60 |
+| PROXY_CONNECT_TIMEOUT | Proxy connection timeout in seconds | 60 |
+
+## 📊 API Integration
+
+BlockHub integrates with the following APIs:
+
+- **Blockchain.com API**: For blockchain data, transactions, and blocks
+- **CoinGecko API**: For Bitcoin price information
+- **GitHub API**: For dataset information
+
+The application includes fallback mechanisms to ensure functionality even when APIs are unavailable.
+
+## 🔍 Docker Commands
+
+See [docker-commands.md](docker-commands.md) for a list of useful Docker commands for managing your BlockHub deployment.
+
+## 📦 Project Structure
+
+```
+blockhub/
+├── .env                 # Environment variables
+├── .env.example         # Example environment variables
+├── docker-compose.yml   # Docker Compose configuration
+├── docker-compose.prod.yml # Production Docker Compose configuration
+├── Dockerfile           # Docker configuration
+├── nginx.conf           # Nginx configuration
+├── nginx.ssl.conf       # Nginx configuration with SSL
+├── docker-entrypoint.sh # Docker entrypoint script
+├── docker-setup.sh      # Setup script
+├── ssl-setup.sh         # SSL setup script
+├── renew-ssl.sh         # SSL renewal script
+└── src/                 # Application source code
 ```
 
-If you are using a custom domain, update the `DOMAIN` variable:
+## 🤝 Contributing
 
-```env
-DOMAIN=yourdomain.com
-```
+Contributions are welcome! Please feel free to submit a Pull Request.
 
----
+## 📄 License
 
-### 3. Configure Nginx
+This project is licensed under the MIT License - see the LICENSE file for details.
 
-The Nginx configuration has been updated to support both HTTP and HTTPS. The configuration includes:
+## 👨‍💻 Author
 
-- **HTTP to HTTPS Redirection**: All HTTP traffic is redirected to HTTPS.
-- **SSL Settings**: Secure protocols and ciphers are enforced.
-
-The Nginx configuration file is located at `nginx.conf`. It uses environment variables to dynamically configure the domain and SSL paths.
-
----
-
-### 4. Update Docker Compose
-
-The `docker-compose.yml` file has been updated to expose the HTTPS port (443) and mount the SSL certificates. Ensure the following configuration is present:
-
-```yaml
-services:
-  blockhub:
-    ports:
-      - "80:80"
-      - "443:443"
-    volumes:
-      - /etc/ssl/certs:/etc/ssl/certs:ro
-      - /etc/ssl/private:/etc/ssl/private:ro
-```
-
----
-
-### 5. Build and Run the Application
-
-Rebuild the Docker image and start the application:
-
-1. Build the Docker image:
-   ```bash
-   docker-compose build
-   ```
-
-2. Start the application:
-   ```bash
-   docker-compose up
-   ```
-
----
-
-### 6. Access the Application
-
-- **HTTP**: Access the application at `http://localhost`.
-- **HTTPS**: Access the application at `https://localhost`.
-
-If you are using a custom domain, replace `localhost` with your domain name.
-
----
-
-## Notes
-
-- **Self-Signed Certificates**: Self-signed certificates are suitable for development environments. For production, use certificates issued by a trusted Certificate Authority (CA).
-- **Browser Warnings**: Browsers may display warnings for self-signed certificates. This is expected in development environments.
-
----
-
-## Troubleshooting
-
-1. **SSL Certificate Not Found**:
-   - Ensure the `SSL_CERTIFICATE` and `SSL_CERTIFICATE_KEY` paths in the `.env` file are correct.
-   - Verify that the certificate and key files exist in the specified locations.
-
-2. **Nginx Configuration Issues**:
-   - Check the Nginx logs for errors:
-     ```bash
-     docker logs blockhub
-     ```
-
-3. **Port Conflicts**:
-   - Ensure that ports 80 and 443 are not being used by other services on your system.
-
----
-
-By following this guide, you can successfully enable HTTPS for the BlockHub application, ensuring secure communication for your users.
+- **Pymmdrza** - [GitHub](https://github.com/Pymmdrza)

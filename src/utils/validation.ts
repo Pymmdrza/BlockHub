@@ -18,3 +18,17 @@ export const isTransactionId = (txid: string): boolean => {
   const txidFormat = /^[a-fA-F0-9]{64}$/;
   return txidFormat.test(txid);
 };
+
+// Block hash validation
+export const isBlockHash = (hash: string): boolean => {
+  // Block hash must be exactly 64 characters long and contain only hexadecimal characters
+  const blockHashFormat = /^[a-fA-F0-9]{64}$/;
+  return blockHashFormat.test(hash);
+};
+
+// Block height validation
+export const isBlockHeight = (height: number): boolean => {
+  // Current Bitcoin block height is around 800,000 as of 2025
+  // This is a simple validation to ensure the height is reasonable
+  return height >= 0 && height < 1000000;
+};

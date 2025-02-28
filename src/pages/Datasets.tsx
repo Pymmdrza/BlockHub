@@ -1,37 +1,97 @@
 import React, { useEffect, useState } from 'react';
-import { Download, FileText, Database, Calendar } from 'lucide-react';
+import { Download, FileText, Database, Calendar, AlertCircle } from 'lucide-react';
+import apiProxy from '../services/apiProxy';
 
-interface DatasetLink {
-  type: string;
-  link: string;
-  format: string;
-  size: string;
-  description: string;
-  updated: string;
+interface GitHubAsset {
+  name: string;
+  content_type: string;
+  size: number;
+  download_count: number;
+  created_at: string;
+  updated_at: string;
+  browser_download_url: string;
 }
 
-interface ApiResponse {
-  links: DatasetLink[];
+interface GitHubRelease {
+  name: string;
+  published_at: string;
+  body: string;
+  assets: GitHubAsset[];
 }
 
 export const Datasets: React.FC = () => {
-  const [datasets, setDatasets] = useState<DatasetLink[]>([]);
+  const [assets, setAssets] = useState<GitHubAsset[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [releaseInfo, setReleaseInfo] = useState<string | null>(null);
 
   useEffect(() => {
     const loadDatasets = async () => {
       try {
-        const response = await fetch('/dataset_links.json');
-        if (!response.ok) {
-          throw new Error('Failed to load dataset information');
+        setLoading(true);
+        
+        // Use our proxy service instead of directly calling the GitHub API
+        // This hides the actual API endpoint from the client
+        const releases = await apiProxy.fetchFromGitHub();
+        
+        // Get the latest release with assets
+        const latestRelease = Array.isArray(releases) && releases.length > 0 
+          ? releases.find((release: GitHubRelease) => release.assets && release.assets.length > 0)
+          : null;
+        
+        if (latestRelease && latestRelease.assets.length > 0) {
+          setAssets(latestRelease.assets);
+          setReleaseInfo(latestRelease.name || latestRelease.published_at);
+        } else {
+          // Fallback to local data if no assets found
+          const fallbackResponse = await fetch('/dataset_links.json');
+          if (!fallbackResponse.ok) {
+            throw new Error('Failed to load dataset information');
+          }
+          const fallbackData = await fallbackResponse.json();
+          
+          // Convert local data format to GitHub asset format
+          const fallbackAssets = fallbackData.links.map((link: any) => ({
+            name: link.type,
+            content_type: link.format === 'TAR.GZ' ? 'application/gzip' : 'application/octet-stream',
+            size: parseInt(link.size.replace(/[^0-9]/g, '')) * 1024 * 1024 * 1024, // Convert GB to bytes
+            download_count: Math.floor(Math.random() * 10),
+            created_at: link.updated,
+            updated_at: link.updated,
+            browser_download_url: link.link
+          }));
+          
+          setAssets(fallbackAssets);
         }
-        const data: ApiResponse = await response.json();
-        setDatasets(data.links);
+        
         setError(null);
       } catch (err) {
+        console.error('Error loading datasets:', err);
         setError('Failed to load dataset information');
-        setDatasets([]);
+        
+        // Try to load fallback data from local file
+        try {
+          const fallbackResponse = await fetch('/dataset_links.json');
+          if (fallbackResponse.ok) {
+            const fallbackData = await fallbackResponse.json();
+            
+            // Convert local data format to GitHub asset format
+            const fallbackAssets = fallbackData.links.map((link: any) => ({
+              name: link.type,
+              content_type: link.format === 'TAR.GZ' ? 'application/gzip' : 'application/octet-stream',
+              size: parseInt(link.size.replace(/[^0-9]/g, '')) * 1024 * 1024 * 1024, // Convert GB to bytes
+              download_count: Math.floor(Math.random() * 10),
+              created_at: link.updated,
+              updated_at: link.updated,
+              browser_download_url: link.link
+            }));
+            
+            setAssets(fallbackAssets);
+            setError(null);
+          }
+        } catch (fallbackErr) {
+          console.error('Error loading fallback data:', fallbackErr);
+        }
       } finally {
         setLoading(false);
       }
@@ -58,6 +118,50 @@ export const Datasets: React.FC = () => {
     }
   };
 
+  const formatFileSize = (bytes: number): string => {
+    if (bytes === 0) return '0 B';
+    
+    const k = 1024;
+    const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    
+    // For GB and above, show one decimal place
+    if (i >= 3) {
+      return `${(bytes / Math.pow(k, i)).toFixed(1)} ${sizes[i]}`;
+    }
+    
+    // For MB and below, round to nearest whole number
+    return `${Math.round(bytes / Math.pow(k, i))} ${sizes[i]}`;
+  };
+
+  const getFileDescription = (fileName: string): string => {
+    if (fileName.includes('P2PKH')) {
+      return 'Collection of Bitcoin P2PKH addresses (starting with "1") with their balances and transaction counts';
+    } else if (fileName.includes('P2SH')) {
+      return 'Collection of Bitcoin P2SH addresses (starting with "3") with their balances and transaction counts';
+    } else if (fileName.includes('BECH32')) {
+      return 'Collection of Bitcoin BECH32 addresses (starting with "bc1") with their balances and transaction counts';
+    } else if (fileName.includes('Address')) {
+      return 'Complete Bitcoin address database with balances, transaction counts, and last activity';
+    } else if (fileName.includes('Addresses.tsv')) {
+      return 'Tab-separated values file containing all Bitcoin addresses with detailed information';
+    } else {
+      return 'Bitcoin blockchain data file containing address information and balances';
+    }
+  };
+
+  const getFileType = (fileName: string, contentType: string): string => {
+    if (fileName.endsWith('.gz') || contentType === 'application/gzip') {
+      return 'GZIP';
+    } else if (fileName.endsWith('.tsv.gz')) {
+      return 'TSV (GZIP)';
+    } else if (fileName.endsWith('.txt.gz')) {
+      return 'TXT (GZIP)';
+    } else {
+      return contentType.split('/')[1]?.toUpperCase() || 'BINARY';
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
@@ -69,7 +173,7 @@ export const Datasets: React.FC = () => {
     );
   }
 
-  if (error) {
+  if (error && assets.length === 0) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
         <div className="text-red-500 bg-red-500/10 px-6 py-4 rounded-lg border border-red-500/20 max-w-md text-center">
@@ -98,41 +202,65 @@ export const Datasets: React.FC = () => {
           </div>
         </div>
 
+        {releaseInfo && (
+          <div className="mb-6 bg-blue-900/20 border border-blue-800/30 rounded-lg p-4 flex items-start gap-3">
+            <Calendar className="w-5 h-5 text-blue-500 flex-shrink-0 mt-0.5" />
+            <div>
+              <p className="text-blue-500 font-medium">Latest Release</p>
+              <p className="text-gray-300">
+                {releaseInfo}
+              </p>
+            </div>
+          </div>
+        )}
+
+        {error && (
+          <div className="mb-6 bg-yellow-900/20 border border-yellow-800/30 rounded-lg p-4 flex items-start gap-3">
+            <AlertCircle className="w-5 h-5 text-yellow-500 flex-shrink-0 mt-0.5" />
+            <div>
+              <p className="text-yellow-500 font-medium">Note</p>
+              <p className="text-gray-400 text-sm">
+                We're having trouble connecting to our dataset repository. Some information may not be up to date.
+              </p>
+            </div>
+          </div>
+        )}
+
         <div className="grid gap-6 md:grid-cols-2">
-          {datasets.map((dataset, index) => (
+          {assets.map((asset, index) => (
             <div
-              key={`${dataset.type}-${index}`}
+              key={`${asset.name}-${index}`}
               className="bg-[#0B1017] rounded-lg p-6 border border-gray-800 hover:border-gray-700 transition-colors group"
             >
               <div className="flex flex-col h-full">
                 <div className="flex-1">
                   <h3 className="text-lg font-semibold mb-2 text-gray-100">
-                    {dataset.type}
+                    {asset.name.replace(/_/g, ' ').replace('.txt.gz', '').replace('.tsv.gz', '')}
                   </h3>
                   <p className="text-gray-400 text-sm mb-4">
-                    {dataset.description}
+                    {getFileDescription(asset.name)}
                   </p>
                   
                   <div className="bg-green-900/20 rounded-lg p-3 mb-4 border border-green-800/30">
                     <div className="flex items-center gap-2 text-green-400 text-sm">
                       <Calendar className="w-4 h-4" />
-                      <span>Updated: {formatDate(dataset.updated)}</span>
+                      <span>Updated: {formatDate(asset.updated_at)}</span>
                     </div>
                   </div>
 
                   <div className="flex items-center gap-4 text-sm text-gray-500">
                     <div className="flex items-center gap-1">
                       <FileText className="w-4 h-4" />
-                      <span>{dataset.format}</span>
+                      <span>{getFileType(asset.name, asset.content_type)}</span>
                     </div>
                     <span>•</span>
-                    <span>{dataset.size}</span>
+                    <span>{formatFileSize(asset.size)}</span>
                   </div>
                 </div>
 
                 <div className="mt-4 pt-4 border-t border-gray-800">
                   <a
-                    href={dataset.link}
+                    href={asset.browser_download_url}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="flex items-center justify-center gap-2 w-full p-2 rounded-lg bg-gray-800 text-gray-300 hover:text-orange-500 hover:bg-gray-700 transition-colors"
@@ -158,6 +286,7 @@ export const Datasets: React.FC = () => {
             <li>Datasets are updated regularly to maintain accuracy</li>
             <li>Consider using a download manager for large files</li>
             <li>Check file integrity after download using provided checksums</li>
+            <li>Data is sourced from the Bitcoin blockchain and updated automatically</li>
           </ul>
         </div>
       </div>
