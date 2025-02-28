@@ -1,7 +1,12 @@
-const express = require('express');
-const path = require('path');
-const { createProxyMiddleware } = require('http-proxy-middleware');
-const axios = require('axios');
+import express from 'express';
+import path from 'path';
+import { createProxyMiddleware } from 'http-proxy-middleware';
+import axios from 'axios';
+import { fileURLToPath } from 'url';
+
+// Get __dirname equivalent in ES modules
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // Create Express app
 const app = express();
