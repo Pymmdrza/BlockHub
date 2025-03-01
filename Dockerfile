@@ -30,6 +30,9 @@ COPY --from=builder /app/server ./server
 RUN mkdir -p /app/dist/health
 RUN echo "OK" > /app/dist/health/status
 
+# Create logs directory
+RUN mkdir -p /app/logs
+
 # Expose port
 EXPOSE 80
 

@@ -3,6 +3,7 @@ import path from 'path';
 import { createProxyMiddleware } from 'http-proxy-middleware';
 import axios from 'axios';
 import { fileURLToPath } from 'url';
+import fs from 'fs';
 
 // Get __dirname equivalent in ES modules
 const __filename = fileURLToPath(import.meta.url);
@@ -11,6 +12,22 @@ const __dirname = path.dirname(__filename);
 // Create Express app
 const app = express();
 const PORT = process.env.PORT || 80;
+
+// Setup logging
+const logDir = path.join(__dirname, '../logs');
+if (!fs.existsSync(logDir)) {
+  fs.mkdirSync(logDir, { recursive: true });
+}
+
+const logStream = fs.createWriteStream(path.join(logDir, 'access.log'), { flags: 'a' });
+
+// Simple logging middleware
+app.use((req, res, next) => {
+  const timestamp = new Date().toISOString();
+  const log = `[${timestamp}] ${req.method} ${req.url}\n`;
+  logStream.write(log);
+  next();
+});
 
 // Cache for GitHub API responses to avoid rate limiting
 const apiCache = new Map();
@@ -72,6 +89,7 @@ app.use('/api/v2', createProxyMiddleware({
   },
   onError: (err, req, res) => {
     console.error('Proxy error:', err);
+    logStream.write(`[${new Date().toISOString()}] Proxy error: ${err.message}\n`);
     res.status(502).json({
       error: 'Bad Gateway',
       message: 'The server encountered a temporary error. Please try again later.'
@@ -92,6 +110,7 @@ app.use('/block_api', createProxyMiddleware({
   },
   onError: (err, req, res) => {
     console.error('Proxy error:', err);
+    logStream.write(`[${new Date().toISOString()}] Proxy error: ${err.message}\n`);
     res.status(502).json({
       error: 'Bad Gateway',
       message: 'The server encountered a temporary error. Please try again later.'
@@ -134,6 +153,7 @@ app.get('/api/proxy', async (req, res) => {
     res.status(response.status).json(response.data);
   } catch (error) {
     console.error('Proxy error:', error);
+    logStream.write(`[${new Date().toISOString()}] Proxy error: ${error.message}\n`);
     res.status(error.response?.status || 500).json({
       error: 'Proxy request failed',
       message: error.message
@@ -185,4 +205,22 @@ app.get('*', (req, res) => {
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
   console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
+  logStream.write(`[${new Date().toISOString()}] Server started on port ${PORT}\n`);
+});
+
+// Handle process termination
+process.on('SIGINT', () => {
+  logStream.end(`[${new Date().toISOString()}] Server shutting down\n`);
+  process.exit(0);
+});
+
+process.on('SIGTERM', () => {
+  logStream.end(`[${new Date().toISOString()}] Server shutting down\n`);
+  process.exit(0);
+});
+
+process.on('uncaughtException', (err) => {
+  console.error('Uncaught exception:', err);
+  logStream.write(`[${new Date().toISOString()}] Uncaught exception: ${err.message}\n${err.stack}\n`);
+  process.exit(1);
 });

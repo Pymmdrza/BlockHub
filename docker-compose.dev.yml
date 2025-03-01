@@ -1,0 +1,35 @@
+version: "3.8"
+
+services:
+  blockhub:
+    container_name: blockhub-dev
+    image: blockhub:dev
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+      args:
+        - NODE_ENV=development
+    ports:
+      - "${PORT:-3000}:3000"
+    environment:
+      - PORT=3000
+      - NODE_ENV=development
+      - DOMAIN=${DOMAIN:-localhost}
+      - VITE_API_BASE_URL=/api/v2
+    volumes:
+      - ./:/app
+      - /app/node_modules
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O-", "http://localhost:3000/health/status"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 5s
+    restart: unless-stopped
+    networks:
+      - blocknet-dev
+    command: npm run dev
+
+networks:
+  blocknet-dev:
+    driver: bridge 

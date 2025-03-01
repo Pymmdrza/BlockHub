@@ -64,7 +64,11 @@ export class BlockchainWebSocket {
             
             if (this.messageCallbacks.has(op)) {
               const callbacks = this.messageCallbacks.get(op) || [];
-              callbacks.forEach(callback => callback(data));
+              
+              // Sanitize the data to prevent "unsupported type for structured data" errors
+              const sanitizedData = this.sanitizeData(data);
+              
+              callbacks.forEach(callback => callback(sanitizedData));
             }
           } catch (error) {
             console.error('Error parsing WebSocket message:', error);
@@ -99,6 +103,46 @@ export class BlockchainWebSocket {
         resolve();
       }
     });
+  }
+
+  // Sanitize data to ensure it only contains serializable types
+  private sanitizeData(data: any): any {
+    if (data === null || data === undefined) {
+      return data;
+    }
+    
+    if (typeof data !== 'object') {
+      return data;
+    }
+    
+    if (Array.isArray(data)) {
+      return data.map(item => this.sanitizeData(item));
+    }
+    
+    const sanitized: any = {};
+    
+    for (const key in data) {
+      if (Object.prototype.hasOwnProperty.call(data, key)) {
+        const value = data[key];
+        
+        if (value === null || value === undefined) {
+          sanitized[key] = value;
+        } else if (typeof value === 'function') {
+          // Skip functions
+          continue;
+        } else if (typeof value === 'object') {
+          if (Array.isArray(value)) {
+            sanitized[key] = value.map(item => this.sanitizeData(item));
+          } else {
+            sanitized[key] = this.sanitizeData(value);
+          }
+        } else {
+          sanitized[key] = value;
+        }
+      }
+    }
+    
+    return sanitized;
   }
 
   public isUsingMockData(): boolean {

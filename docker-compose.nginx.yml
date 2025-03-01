@@ -1,0 +1,61 @@
+version: "3.8"
+
+services:
+  blockhub:
+    container_name: blockhub
+    image: blockhub:${TAG:-latest}
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        - NODE_ENV=${NODE_ENV:-production}
+    expose:
+      - "80"
+    environment:
+      - PORT=80
+      - NODE_ENV=${NODE_ENV:-production}
+      - DOMAIN=${DOMAIN:-localhost}
+      - VITE_API_BASE_URL=/api/v2
+    volumes:
+      - blockhub_logs:/app/logs
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O-", "http://localhost/health/status"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 5s
+    restart: unless-stopped
+    networks:
+      - blocknet
+    deploy:
+      resources:
+        limits:
+          cpus: '${CPU_LIMIT:-1}'
+          memory: ${MEMORY_LIMIT:-1G}
+
+  nginx:
+    image: nginx:alpine
+    container_name: blockhub-nginx
+    ports:
+      - "${PORT:-80}:80"
+    volumes:
+      - ./nginx.conf:/etc/nginx/templates/default.conf.template
+    environment:
+      - DOMAIN=${DOMAIN:-localhost}
+      - NGINX_WORKER_PROCESSES=${NGINX_WORKER_PROCESSES:-auto}
+      - NGINX_WORKER_CONNECTIONS=${NGINX_WORKER_CONNECTIONS:-1024}
+      - PROXY_READ_TIMEOUT=${PROXY_READ_TIMEOUT:-60}
+      - PROXY_CONNECT_TIMEOUT=${PROXY_CONNECT_TIMEOUT:-60}
+    depends_on:
+      - blockhub
+    networks:
+      - blocknet
+    restart: unless-stopped
+
+networks:
+  blocknet:
+    driver: bridge
+
+volumes:
+  blockhub_logs:
+    driver: local 

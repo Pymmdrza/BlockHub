@@ -1,0 +1,25 @@
+FROM node:20-alpine
+
+WORKDIR /app
+
+# Install dependencies
+COPY package*.json ./
+RUN npm install
+
+# Create directory for health checks
+RUN mkdir -p /app/dist/health
+RUN echo "OK" > /app/dist/health/status
+
+# Expose port for development
+EXPOSE 3000
+
+# Set environment variables
+ENV NODE_ENV=development \
+    PORT=3000
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD wget -q -O- http://localhost:3000/health/status || exit 1
+
+# Start development server
+CMD ["npm", "run", "dev"] 

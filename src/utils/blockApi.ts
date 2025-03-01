@@ -52,9 +52,9 @@ export const fetchLatestBlocks = async (limit: number = 10): Promise<BlockData[]
     
     // Process and return the blocks
     const blocks = response.data.blocks.slice(0, limit).map((block: any) => ({
-      hash: block.hash,
-      height: block.height,
-      time: block.time,
+      hash: block.hash || '',
+      height: block.height || 0,
+      time: block.time || Math.floor(Date.now() / 1000),
       size: block.size || 0,
       txCount: block.n_tx || 0,
       miner: extractMinerFromCoinbase(block.miner || '')
@@ -96,20 +96,20 @@ export const fetchBlockDetails = async (hashOrHeight: string): Promise<BlockInfo
     
     // Process and return the block details
     return {
-      hash: blockData.hash,
-      height: blockData.height,
-      time: blockData.time,
+      hash: blockData.hash || '',
+      height: blockData.height || 0,
+      time: blockData.time || Math.floor(Date.now() / 1000),
       size: blockData.size || 0,
       txCount: blockData.n_tx || 0,
       miner: extractMinerFromCoinbase(blockData.miner || ''),
-      prevBlockHash: blockData.prev_block,
+      prevBlockHash: blockData.prev_block || '',
       nextBlockHash: null, // API doesn't provide this directly
-      merkleRoot: blockData.mrkl_root,
-      version: blockData.ver,
-      bits: blockData.bits,
-      nonce: blockData.nonce,
-      weight: blockData.weight,
-      difficulty: blockData.difficulty,
+      merkleRoot: blockData.mrkl_root || '',
+      version: blockData.ver || 0,
+      bits: blockData.bits || '',
+      nonce: blockData.nonce || 0,
+      weight: blockData.weight || 0,
+      difficulty: blockData.difficulty || 0,
       transactions: blockData.tx || [],
       reward: calculateBlockReward(blockData.height)
     };
@@ -284,7 +284,7 @@ export const generateNetworkChartData = (dataPoints: number = 20): {
  */
 const extractMinerFromCoinbase = (coinbaseData: string): string => {
   // Common mining pools
-  const miningPools = {
+  const miningPools: Record<string, string> = {
     '/Foundry/': 'Foundry USA',
     '/F2Pool/': 'F2Pool',
     '/AntPool/': 'AntPool',

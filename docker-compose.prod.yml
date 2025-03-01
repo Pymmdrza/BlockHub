@@ -3,16 +3,17 @@ version: "3.8"
 services:
   blockhub:
     container_name: blockhub
-    image: blockhub
+    image: blockhub:latest
     build:
       context: .
       dockerfile: Dockerfile
     ports:
-      - "${PORT:-80}:80"
+      - "80:80"
+      - "443:443"
     environment:
       - PORT=80
       - NODE_ENV=production
-      - DOMAIN=${DOMAIN:-localhost}
+      - DOMAIN=${DOMAIN:-blockhub.example.com}
       - VITE_API_BASE_URL=/api/v2
     volumes:
       - ./logs:/app/logs
@@ -25,6 +26,14 @@ services:
     restart: unless-stopped
     networks:
       - blocknet
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 2G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
 
 networks:
   blocknet:
