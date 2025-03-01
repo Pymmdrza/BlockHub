@@ -77,12 +77,12 @@ app.get('/health/status', (req, res) => {
 // Setup API proxies
 // Bitcoin API proxy
 app.use('/api/v2', createProxyMiddleware({
-  target: 'https://bitcoin.atomicwallet.io',
+  target: 'https://btcbook.guarda.co',
   changeOrigin: true,
   pathRewrite: { '^/api/v2': '/api/v2' },
   headers: {
     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
-    'Referer': 'https://atomicwallet.io/'
+    'Referer': 'https://guarda.co/'
   },
   onProxyReq: (proxyReq) => {
     proxyReq.setHeader('Accept', 'application/json');
@@ -131,7 +131,7 @@ app.get('/api/proxy', async (req, res) => {
     const allowedDomains = [
       'api.github.com',
       'blockchain.info',
-      'bitcoin.atomicwallet.io'
+      'btcbook.guarda.co'
     ];
     
     const url = new URL(endpoint);
