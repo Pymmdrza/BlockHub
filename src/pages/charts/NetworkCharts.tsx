@@ -157,7 +157,6 @@ export const NetworkCharts: React.FC = () => {
             
             <div className="mt-6 text-sm text-gray-400">
               <p>{selectedChartInfo?.description}</p>
-              <p className="mt-2">Source: blockchain.com</p>
             </div>
           </div>
         </div>
