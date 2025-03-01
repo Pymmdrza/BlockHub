@@ -26,11 +26,24 @@ export const Transaction: React.FC = () => {
 
   useEffect(() => {
     const loadData = async () => {
+      if (!txid) {
+        setError('No transaction ID provided');
+        setLoading(false);
+        return;
+      }
+
       try {
-        if (!txid) throw new Error('No transaction ID provided');
+        setLoading(true);
+        setError(null);
         const result = await fetchTransactionInfo(txid);
+        
+        if (!result || !result.txid) {
+          throw new Error('Invalid transaction data received');
+        }
+        
         setData(result);
       } catch (err) {
+        console.error('Error loading transaction data:', err);
         setError('Failed to load transaction information');
       } finally {
         setLoading(false);
@@ -56,7 +69,7 @@ export const Transaction: React.FC = () => {
     return (
       <div className="flex flex-col items-center justify-center min-h-[50vh]">
         <div className="text-center max-w-lg p-8 bg-[#0E141B] dark:bg-[#0E141B] rounded-lg shadow-lg border border-gray-800">
-          <p className="text-red-500 mb-6">{error}</p>
+          <p className="text-red-500 mb-6">{error || 'Transaction data not available'}</p>
           <Link 
             to="/" 
             className="inline-flex items-center gap-2 px-6 py-3 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors"
@@ -80,6 +93,10 @@ export const Transaction: React.FC = () => {
       <span>Unconfirmed</span>
     </div>
   );
+
+  // Check if we have valid input and output data
+  const hasValidInputs = data.vin && data.vin.length > 0 && data.vin.some(input => input.addresses && input.addresses.length > 0);
+  const hasValidOutputs = data.vout && data.vout.length > 0 && data.vout.some(output => output.addresses && output.addresses.length > 0);
 
   return (
     <div className="max-w-7xl mx-auto space-y-6">
@@ -155,7 +172,13 @@ export const Transaction: React.FC = () => {
                 <span>Block Height</span>
               </div>
               <div className="text-xl font-semibold">
-                {data.blockHeight}
+                {data.blockHeight > 0 ? (
+                  <Link to={`/block/${data.blockHeight}`} className="text-blue-400 hover:text-blue-300">
+                    {data.blockHeight}
+                  </Link>
+                ) : (
+                  'Unconfirmed'
+                )}
               </div>
             </div>
 
@@ -183,42 +206,57 @@ export const Transaction: React.FC = () => {
       </div>
 
       <div className="grid gap-4">
-        <div className="bg-[#0E141B] dark:bg-[#0E141B] rounded-lg p-6 border border-gray-800">
-          <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
-            <span className="text-orange-500">Inputs</span>
-            <span className="text-sm text-gray-400">({data.vin.length})</span>
-          </h2>
-          <div className="space-y-3">
-            {data.vin.map((input, index) => (
-              <div key={index} className="p-4 bg-[#0B1017] rounded-lg border border-gray-800 hover:border-gray-700 transition-colors">
-                <div className="flex flex-col gap-3">
-                  <div className="flex items-center justify-between gap-4">
-                    <div className="min-w-0 flex-1">
-                      {input.addresses.map((addr) => (
-                        <Link
-                          key={addr}
-                          to={`/address/${addr}`}
-                          className="block text-orange-500 hover:text-orange-400 font-mono text-sm break-all"
-                          style={{
-                            wordBreak: 'break-word',
-                            overflowWrap: 'break-word'
-                          }}
-                        >
-                          {addr}
-                        </Link>
-                      ))}
-                    </div>
-                    <div className="text-right whitespace-nowrap">
-                      <div className="text-sm font-medium text-green-400">
-                        {formatBitcoinValue(input.value)} BTC
+        {hasValidInputs ? (
+          <div className="bg-[#0E141B] dark:bg-[#0E141B] rounded-lg p-6 border border-gray-800">
+            <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
+              <span className="text-orange-500">Inputs</span>
+              <span className="text-sm text-gray-400">({data.vin.length})</span>
+            </h2>
+            <div className="space-y-3">
+              {data.vin.map((input, index) => (
+                <div key={index} className="p-4 bg-[#0B1017] rounded-lg border border-gray-800 hover:border-gray-700 transition-colors">
+                  <div className="flex flex-col gap-3">
+                    <div className="flex items-center justify-between gap-4">
+                      <div className="min-w-0 flex-1">
+                        {input.addresses && input.addresses.length > 0 ? (
+                          input.addresses.map((addr) => (
+                            <Link
+                              key={addr}
+                              to={`/address/${addr}`}
+                              className="block text-orange-500 hover:text-orange-400 font-mono text-sm break-all"
+                              style={{
+                                wordBreak: 'break-word',
+                                overflowWrap: 'break-word'
+                              }}
+                            >
+                              {addr}
+                            </Link>
+                          ))
+                        ) : (
+                          <span className="text-gray-500 italic">No address data available</span>
+                        )}
+                      </div>
+                      <div className="text-right whitespace-nowrap">
+                        <div className="text-sm font-medium text-green-400">
+                          {formatBitcoinValue(input.value)} BTC
+                        </div>
                       </div>
                     </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
-        </div>
+        ) : (
+          <div className="bg-[#0E141B] dark:bg-[#0E141B] rounded-lg p-6 border border-gray-800">
+            <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
+              <span className="text-orange-500">Inputs</span>
+            </h2>
+            <div className="p-4 bg-[#0B1017] rounded-lg border border-gray-800">
+              <p className="text-gray-400 italic">No input data available for this transaction</p>
+            </div>
+          </div>
+        )}
 
         <div className="flex justify-center">
           <div className="w-8 h-8 bg-[#0E141B] rounded-full flex items-center justify-center">
@@ -226,42 +264,57 @@ export const Transaction: React.FC = () => {
           </div>
         </div>
 
-        <div className="bg-[#0E141B] dark:bg-[#0E141B] rounded-lg p-6 border border-gray-800">
-          <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
-            <span className="text-green-500">Outputs</span>
-            <span className="text-sm text-gray-400">({data.vout.length})</span>
-          </h2>
-          <div className="space-y-3">
-            {data.vout.map((output, index) => (
-              <div key={index} className="p-4 bg-[#0B1017] rounded-lg border border-gray-800 hover:border-gray-700 transition-colors">
-                <div className="flex flex-col gap-3">
-                  <div className="flex items-center justify-between gap-4">
-                    <div className="min-w-0 flex-1">
-                      {output.addresses.map((addr) => (
-                        <Link
-                          key={addr}
-                          to={`/address/${addr}`}
-                          className="block text-green-500 hover:text-green-400 font-mono text-sm break-all"
-                          style={{
-                            wordBreak: 'break-word',
-                            overflowWrap: 'break-word'
-                          }}
-                        >
-                          {addr}
-                        </Link>
-                      ))}
-                    </div>
-                    <div className="text-right whitespace-nowrap">
-                      <div className="text-sm font-medium text-green-400">
-                        {formatBitcoinValue(output.value)} BTC
+        {hasValidOutputs ? (
+          <div className="bg-[#0E141B] dark:bg-[#0E141B] rounded-lg p-6 border border-gray-800">
+            <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
+              <span className="text-green-500">Outputs</span>
+              <span className="text-sm text-gray-400">({data.vout.length})</span>
+            </h2>
+            <div className="space-y-3">
+              {data.vout.map((output, index) => (
+                <div key={index} className="p-4 bg-[#0B1017] rounded-lg border border-gray-800 hover:border-gray-700 transition-colors">
+                  <div className="flex flex-col gap-3">
+                    <div className="flex items-center justify-between gap-4">
+                      <div className="min-w-0 flex-1">
+                        {output.addresses && output.addresses.length > 0 ? (
+                          output.addresses.map((addr) => (
+                            <Link
+                              key={addr}
+                              to={`/address/${addr}`}
+                              className="block text-green-500 hover:text-green-400 font-mono text-sm break-all"
+                              style={{
+                                wordBreak: 'break-word',
+                                overflowWrap: 'break-word'
+                              }}
+                            >
+                              {addr}
+                            </Link>
+                          ))
+                        ) : (
+                          <span className="text-gray-500 italic">No address data available</span>
+                        )}
+                      </div>
+                      <div className="text-right whitespace-nowrap">
+                        <div className="text-sm font-medium text-green-400">
+                          {formatBitcoinValue(output.value)} BTC
+                        </div>
                       </div>
                     </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
-        </div>
+        ) : (
+          <div className="bg-[#0E141B] dark:bg-[#0E141B] rounded-lg p-6 border border-gray-800">
+            <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
+              <span className="text-green-500">Outputs</span>
+            </h2>
+            <div className="p-4 bg-[#0B1017] rounded-lg border border-gray-800">
+              <p className="text-gray-400 italic">No output data available for this transaction</p>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

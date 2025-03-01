@@ -4,6 +4,7 @@ import { Zap, ArrowLeft, Copy, Clock, Database, Hash, ArrowRight, Server } from 
 import { fetchBlockDetails } from '../utils/api';
 import { BlockInfo, WebSocketTransaction } from '../types';
 import { Skeleton, SkeletonText } from '../components/ui/Skeleton';
+import { formatBitcoinValue } from '../utils/api';
 
 export const BlockDetails: React.FC = () => {
   const { hashOrHeight } = useParams<{ hashOrHeight: string }>();
@@ -53,51 +54,6 @@ export const BlockDetails: React.FC = () => {
     if (bytes < 1024) return `${bytes} B`;
     if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(2)} KB`;
     return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
-  };
-
-  // Generate mock transactions if needed
-  const generateMockTransactions = (count: number, blockTime: number): WebSocketTransaction[] => {
-    const mockTransactions: WebSocketTransaction[] = [];
-    
-    for (let i = 0; i < count; i++) {
-      const size = 500 + Math.floor(Math.random() * 1500);
-      
-      mockTransactions.push({
-        hash: i === 0 ? `coinbase-${Math.random().toString(36).substring(2, 15)}` : `tx-${Math.random().toString(36).substring(2, 15)}`,
-        ver: 1,
-        vin_sz: Math.floor(Math.random() * 5) + 1,
-        vout_sz: Math.floor(Math.random() * 5) + 1,
-        lock_time: 0,
-        size,
-        relayed_by: '0.0.0.0',
-        tx_index: i,
-        time: blockTime || Math.floor(Date.now() / 1000),
-        inputs: i === 0 ? [] : Array(Math.floor(Math.random() * 3) + 1).fill(0).map(() => ({
-          prev_out: {
-            addr: `1mock${Math.random().toString(36).substring(2, 15)}`,
-            n: 0,
-            script: '',
-            spent: false,
-            tx_index: 0,
-            type: 0,
-            value: Math.floor(Math.random() * 10000000)
-          },
-          script: '',
-          sequence: 0
-        })),
-        out: Array(Math.floor(Math.random() * 3) + 1).fill(0).map(() => ({
-          addr: `1mock${Math.random().toString(36).substring(2, 15)}`,
-          n: 0,
-          script: '',
-          spent: false,
-          tx_index: 0,
-          type: 0,
-          value: Math.floor(Math.random() * 1000000)
-        }))
-      });
-    }
-    
-    return mockTransactions;
   };
 
   if (isLoading) {
@@ -194,9 +150,7 @@ export const BlockDetails: React.FC = () => {
   }
 
   // Ensure we have transactions to display
-  const transactions = block.transactions?.length ? 
-    block.transactions : 
-    generateMockTransactions(block.txCount || 100, block.time);
+  const transactions = block.transactions || [];
 
   // Pagination
   const indexOfLastTx = currentPage * transactionsPerPage;
@@ -412,11 +366,11 @@ export const BlockDetails: React.FC = () => {
             </thead>
             <tbody className="divide-y divide-gray-800">
               {currentTransactions.map((tx, index) => {
-                const isCoinbase = index === 0 || tx.hash.startsWith('coinbase');
-                const fee = isCoinbase ? 0 : Math.random() * 0.001;
+                const isCoinbase = index === 0;
+                const fee = tx.fee ? formatBitcoinValue(tx.fee.toString()) : (isCoinbase ? 0 : Math.random() * 0.001).toFixed(8);
                 
                 return (
-                  <tr key={index} className={`hover:bg-[#0B1017]/50 transition-colors ${isCoinbase ? 'bg-green-900/10' : ''}`}>
+                  <tr key={tx.hash || index} className={`hover:bg-[#0B1017]/50 transition-colors ${isCoinbase ? 'bg-green-900/10' : ''}`}>
                     <td className="px-6 py-4">
                       <div className="flex items-center">
                         {isCoinbase && (
@@ -437,7 +391,7 @@ export const BlockDetails: React.FC = () => {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span className="text-gray-300">
-                        {isCoinbase ? '-' : `${fee.toFixed(8)} BTC`}
+                        {isCoinbase ? '-' : `${fee} BTC`}
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">

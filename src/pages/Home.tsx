@@ -159,6 +159,8 @@ export const Home: React.FC = () => {
   const handleLatestBlockClick = () => {
     if (networkStats && networkStats.latestBlockHash) {
       window.location.href = `/block/${networkStats.latestBlockHash}`;
+    } else if (networkStats && networkStats.blockHeight) {
+      window.location.href = `/block/${networkStats.blockHeight}`;
     } else {
       window.location.href = '/blocks';
     }

@@ -40,12 +40,12 @@ blockchainApi.interceptors.request.use((config) => {
  */
 export const fetchLatestBlocks = async (limit: number = 10): Promise<BlockData[]> => {
   try {
-    // Use a more reliable endpoint
-    const response = await blockchainApi.get('/blocks/0?format=json', {
-      timeout: 3000
+    // Use blockchain.info blocks endpoint
+    const response = await blockchainApi.get('/blocks?format=json', {
+      timeout: 5000
     });
     
-    if (!response.data?.blocks) {
+    if (!response.data || !Array.isArray(response.data.blocks)) {
       console.warn('Invalid block data format received, falling back to mock data');
       return generateMockBlocks(limit);
     }
@@ -78,24 +78,45 @@ export const fetchBlockDetails = async (hashOrHeight: string): Promise<BlockInfo
   try {
     // Determine if we're looking up by hash or height
     const isHeight = /^\d+$/.test(hashOrHeight);
-    const endpoint = isHeight 
-      ? `/block-height/${hashOrHeight}?format=json` 
-      : `/rawblock/${hashOrHeight}?format=json`;
     
-    const response = await blockchainApi.get(endpoint, {
-      timeout: 3000
+    if (isHeight) {
+      // If looking up by height, first get the block hash
+      const heightResponse = await blockchainApi.get(`/block-height/${hashOrHeight}?format=json`, {
+        timeout: 5000
+      });
+      
+      if (!heightResponse.data?.blocks || !heightResponse.data.blocks[0]) {
+        console.warn('Block not found by height, falling back to mock data');
+        return generateMockBlockDetails(hashOrHeight);
+      }
+      
+      // Use the hash from the height lookup
+      hashOrHeight = heightResponse.data.blocks[0].hash;
+    }
+    
+    // Now fetch the block details by hash
+    const response = await blockchainApi.get(`/rawblock/${hashOrHeight}?format=json`, {
+      timeout: 5000
     });
     
-    // If looking up by height, we need to extract the block from the response
-    const blockData = isHeight ? response.data?.blocks?.[0] : response.data;
-    
-    if (!blockData || !blockData.height) {
-      console.warn('Block not found or invalid data received, falling back to mock data');
+    if (!response.data || !response.data.hash) {
+      console.warn('Invalid block data received, falling back to mock data');
       return generateMockBlockDetails(hashOrHeight);
     }
     
+    const blockData = response.data;
+    
+    // Process transactions
+    const transactions = blockData.tx ? blockData.tx.map((tx: any) => ({
+      hash: tx.hash || '',
+      size: tx.size || 0,
+      fee: tx.fee || 0,
+      inputs: tx.inputs || [],
+      out: tx.out || []
+    })) : [];
+    
     // Process and return the block details
-    return {
+    const blockInfo: BlockInfo = {
       hash: blockData.hash || '',
       height: blockData.height || 0,
       time: blockData.time || Math.floor(Date.now() / 1000),
@@ -110,9 +131,24 @@ export const fetchBlockDetails = async (hashOrHeight: string): Promise<BlockInfo
       nonce: blockData.nonce || 0,
       weight: blockData.weight || 0,
       difficulty: blockData.difficulty || 0,
-      transactions: blockData.tx || [],
-      reward: calculateBlockReward(blockData.height)
+      reward: calculateBlockReward(blockData.height),
+      transactions: transactions
     };
+    
+    // Try to get the next block hash if available
+    try {
+      const nextBlockResponse = await blockchainApi.get(`/block-height/${blockInfo.height + 1}?format=json`, {
+        timeout: 3000
+      });
+      
+      if (nextBlockResponse.data?.blocks && nextBlockResponse.data.blocks[0]) {
+        blockInfo.nextBlockHash = nextBlockResponse.data.blocks[0].hash;
+      }
+    } catch (error) {
+      console.warn('Could not fetch next block hash');
+    }
+    
+    return blockInfo;
   } catch (error) {
     console.error('Error fetching block details:', error);
     
@@ -129,7 +165,7 @@ export const fetchNetworkStats = async (): Promise<NetworkInfo> => {
   // Create a function to fetch a single API endpoint with fallback
   const fetchWithFallback = async (endpoint: string, defaultValue: any) => {
     try {
-      const response = await blockchainApi.get(endpoint, { timeout: 2000 });
+      const response = await blockchainApi.get(endpoint, { timeout: 3000 });
       return response.data;
     } catch (error) {
       console.warn(`Failed to fetch ${endpoint}, using default value`);
@@ -138,32 +174,27 @@ export const fetchNetworkStats = async (): Promise<NetworkInfo> => {
   };
 
   try {
-    // Fetch basic stats first
-    const statsPromise = fetchWithFallback('/stats?format=json', null);
-    
-    // Fetch these in parallel with short timeouts
+    // Fetch stats in parallel
     const [
       stats,
+      latestBlock,
       difficulty,
-      unconfirmedCount,
-      marketCap,
-      txCount24h,
-      btcSent24h,
       hashRate,
-      nextRetarget,
+      mempoolInfo,
+      unconfirmedCount,
       blockCount,
-      latestHash
+      marketCap,
+      txCount24h
     ] = await Promise.all([
-      statsPromise,
+      fetchWithFallback('/stats?format=json', null),
+      fetchWithFallback('/latestblock?format=json', null),
       fetchWithFallback('/q/getdifficulty', 78.3),
-      fetchWithFallback('/q/unconfirmedcount', 12500),
-      fetchWithFallback('/q/marketcap', 1200000000000),
-      fetchWithFallback('/q/24hrtransactioncount', 350000),
-      fetchWithFallback('/q/24hrbtcsent', 25000000000), // in satoshis
       fetchWithFallback('/q/hashrate', 350000000),
-      fetchWithFallback('/q/nextretarget', 840000),
+      fetchWithFallback('/mempool/fees?format=json', null),
+      fetchWithFallback('/q/unconfirmedcount', 12500),
       fetchWithFallback('/q/getblockcount', 800000),
-      fetchWithFallback('/q/latesthash', '')
+      fetchWithFallback('/q/marketcap', 1200000000000),
+      fetchWithFallback('/q/24hrtransactioncount', 350000)
     ]);
     
     // If we couldn't get the basic stats, use mock data
@@ -174,17 +205,34 @@ export const fetchNetworkStats = async (): Promise<NetworkInfo> => {
     
     // Parse numeric values
     const difficultyValue = parseFloat(difficulty) || 78.3;
+    const hashRateGH = parseFloat(hashRate) || 350000000;
     const unconfirmedTxs = parseInt(unconfirmedCount, 10) || 12500;
+    const blockHeight = parseInt(blockCount, 10) || 800000;
     const marketCapValue = parseFloat(marketCap) || 1200000000000;
     const txCount24hValue = parseInt(txCount24h, 10) || 350000;
-    const btcSent24hValue = parseInt(btcSent24h, 10) / 100000000 || 250000; // Convert satoshis to BTC
-    const hashRateGH = parseFloat(hashRate) || 350000000;
-    const nextRetargetValue = parseInt(nextRetarget, 10) || 840000;
-    const blockCountValue = parseInt(blockCount, 10) || 800000;
-    const latestHashValue = latestHash || '';
     
     // Convert hash rate from GH/s to EH/s
     const hashRateEH = hashRateGH / 1000000;
+    
+    // Calculate next retarget block
+    const nextRetargetBlock = Math.ceil(blockHeight / 2016) * 2016;
+    
+    // Get mempool size
+    const mempoolSize = stats.mempool_size || 250;
+    
+    // Get average block time
+    const avgBlockTime = stats.minutes_between_blocks || 10;
+    
+    // Get average transaction fee
+    const avgTransactionFee = stats.cost_per_transaction_satoshis 
+      ? stats.cost_per_transaction_satoshis / 100000000 
+      : mempoolInfo?.priority ? mempoolInfo.priority / 100000000 : 0.0002;
+    
+    // Get latest block hash
+    const latestBlockHash = latestBlock?.hash || '';
+    
+    // Calculate BTC sent in last 24h (estimate)
+    const btcSent24h = stats.estimated_btc_sent || 250000;
     
     // Process and return the network stats
     return {
@@ -192,16 +240,16 @@ export const fetchNetworkStats = async (): Promise<NetworkInfo> => {
       hashRate: hashRateEH,
       difficulty: difficultyValue,
       unconfirmedTxs: unconfirmedTxs,
-      blockHeight: blockCountValue,
-      latestBlockHash: latestHashValue,
-      nextRetargetBlock: nextRetargetValue,
-      mempoolSize: stats.mempool_size || 250,
+      blockHeight: blockHeight,
+      latestBlockHash: latestBlockHash,
+      nextRetargetBlock: nextRetargetBlock,
+      mempoolSize: mempoolSize,
       totalTransactions: stats.n_tx_total || 850000000,
-      avgBlockTime: stats.minutes_between_blocks || 10,
-      avgTransactionFee: stats.cost_per_transaction_satoshis ? stats.cost_per_transaction_satoshis / 100000000 : 0.0002,
+      avgBlockTime: avgBlockTime,
+      avgTransactionFee: avgTransactionFee,
       marketCap: marketCapValue,
       txCount24h: txCount24hValue,
-      btcSent24h: btcSent24hValue
+      btcSent24h: btcSent24h
     };
   } catch (error) {
     console.error('Error fetching network stats:', error);
@@ -217,6 +265,7 @@ export const fetchNetworkStats = async (): Promise<NetworkInfo> => {
  */
 export const fetchMempoolInfo = async () => {
   try {
+    // Try to get mempool info from blockchain.info
     const response = await blockchainApi.get('/mempool?format=json', {
       timeout: 3000
     });
@@ -325,8 +374,26 @@ const calculateBlockReward = (height: number): number => {
  * @param count Number of blocks to generate
  * @returns Array of BlockData objects
  */
-const generateMockBlocks = (count: number): BlockData[] => {
-  const startHeight = 800000;
+const generateMockBlocks = (count: number): Promise<BlockData[]> => {
+  // Try to get the latest block height from the API first
+  return blockchainApi.get('/q/getblockcount', { timeout: 2000 })
+    .then(response => {
+      const latestHeight = parseInt(response.data, 10);
+      return generateMockBlocksWithHeight(count, isNaN(latestHeight) ? 800000 : latestHeight);
+    })
+    .catch(() => {
+      // If API call fails, use a default height
+      return generateMockBlocksWithHeight(count, 800000);
+    });
+};
+
+/**
+ * Generate mock blocks with a specific starting height
+ * @param count Number of blocks to generate
+ * @param startHeight Starting block height
+ * @returns Array of BlockData objects
+ */
+const generateMockBlocksWithHeight = (count: number, startHeight: number): BlockData[] => {
   const mockBlocks: BlockData[] = [];
   
   const miners = [
@@ -366,9 +433,68 @@ const generateMockBlocks = (count: number): BlockData[] => {
 const generateMockBlockDetails = (hashOrHeight: string): BlockInfo => {
   const isHeight = /^\d+$/.test(hashOrHeight);
   const height = isHeight ? parseInt(hashOrHeight, 10) : 800000 - Math.floor(Math.random() * 100);
+  const hash = isHeight ? `000000000000000000${Math.random().toString(16).substring(2, 14)}` : hashOrHeight;
+  
+  // Generate mock transactions
+  const txCount = 2000 + Math.floor(Math.random() * 1000);
+  const transactions = [];
+  
+  for (let i = 0; i < Math.min(txCount, 100); i++) {
+    const txHash = `${Math.random().toString(16).substring(2, 10)}${Math.random().toString(16).substring(2, 10)}${Math.random().toString(16).substring(2, 10)}${Math.random().toString(16).substring(2, 10)}`;
+    const size = 500 + Math.floor(Math.random() * 1500);
+    const fee = Math.random() * 0.001;
+    
+    // Generate inputs
+    const inputCount = Math.floor(Math.random() * 5) + 1;
+    const inputs = [];
+    
+    for (let j = 0; j < inputCount; j++) {
+      const addr = `1${Math.random().toString(36).substring(2, 15)}`;
+      const value = Math.floor(Math.random() * 10000000);
+      
+      inputs.push({
+        prev_out: {
+          addr,
+          value,
+          n: j,
+          script: '',
+          spent: true,
+          tx_index: Math.floor(Math.random() * 1000000)
+        },
+        script: '',
+        sequence: 0
+      });
+    }
+    
+    // Generate outputs
+    const outputCount = Math.floor(Math.random() * 5) + 1;
+    const outputs = [];
+    
+    for (let j = 0; j < outputCount; j++) {
+      const addr = `1${Math.random().toString(36).substring(2, 15)}`;
+      const value = Math.floor(Math.random() * 1000000);
+      
+      outputs.push({
+        addr,
+        value,
+        n: j,
+        script: '',
+        spent: false,
+        tx_index: Math.floor(Math.random() * 1000000)
+      });
+    }
+    
+    transactions.push({
+      hash: txHash,
+      size,
+      fee,
+      inputs,
+      out: outputs
+    });
+  }
   
   return {
-    hash: isHeight ? `000000000000000000${Math.random().toString(16).substring(2, 14)}` : hashOrHeight,
+    hash,
     prevBlockHash: `000000000000000000${Math.random().toString(16).substring(2, 14)}`,
     nextBlockHash: Math.random() > 0.2 ? `000000000000000000${Math.random().toString(16).substring(2, 14)}` : null,
     height,
@@ -380,8 +506,8 @@ const generateMockBlockDetails = (hashOrHeight: string): BlockInfo => {
     nonce: Math.floor(Math.random() * 1000000000),
     bits: '1a0ff55e',
     difficulty: 78.3 + Math.random() * 1,
-    transactions: [],
-    txCount: 2000 + Math.floor(Math.random() * 1000),
+    transactions,
+    txCount,
     miner: ['Foundry USA', 'AntPool', 'F2Pool', 'Binance Pool', 'ViaBTC'][Math.floor(Math.random() * 5)],
     reward: calculateBlockReward(height)
   };
@@ -391,8 +517,25 @@ const generateMockBlockDetails = (hashOrHeight: string): BlockInfo => {
  * Generate mock network stats for testing
  * @returns NetworkInfo object
  */
-const generateMockNetworkStats = (): NetworkInfo => {
-  const mockBlockHeight = 800000 + Math.floor(Math.random() * 10);
+const generateMockNetworkStats = (): Promise<NetworkInfo> => {
+  // Try to get the latest block height from the API first
+  return blockchainApi.get('/q/getblockcount', { timeout: 2000 })
+    .then(response => {
+      const latestHeight = parseInt(response.data, 10);
+      return generateMockNetworkStatsWithHeight(isNaN(latestHeight) ? 800000 : latestHeight);
+    })
+    .catch(() => {
+      // If API call fails, use a default height
+      return generateMockNetworkStatsWithHeight(800000);
+    });
+};
+
+/**
+ * Generate mock network stats with a specific block height
+ * @param blockHeight Block height to use
+ * @returns NetworkInfo object
+ */
+const generateMockNetworkStatsWithHeight = (blockHeight: number): NetworkInfo => {
   const mockLatestHash = `000000000000000000${Math.random().toString(16).substring(2, 14)}`;
   
   return {
@@ -400,9 +543,9 @@ const generateMockNetworkStats = (): NetworkInfo => {
     hashRate: 350.5 + Math.random() * 10,
     difficulty: 78.3 + Math.random() * 1,
     unconfirmedTxs: 12500 + Math.floor(Math.random() * 1000),
-    blockHeight: mockBlockHeight,
+    blockHeight,
     latestBlockHash: mockLatestHash,
-    nextRetargetBlock: 840000,
+    nextRetargetBlock: Math.ceil(blockHeight / 2016) * 2016,
     mempoolSize: 250 + Math.random() * 20,
     totalTransactions: 850000000 + Math.floor(Math.random() * 1000000),
     avgBlockTime: 9.8 + Math.random() * 0.4,
