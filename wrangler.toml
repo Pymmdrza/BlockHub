@@ -1,9 +1,17 @@
 name = "blockhub"
-main = "src/worker.ts"
-compatibility_date = "2025-02-25"
+compatibility_date = "2025-02-01"
 
-[assets]
-directory = "./dist"
-binding = "ASSETS"
-not_found_handling = "404-page"
-run_worker_first = true
+main = "src/worker.ts"
+
+[site]
+bucket = "dist"
+
+[build]
+command = "npm run build"
+watch_dir = "src"
+
+[env.production]
+workers_dev = false
+
+[env.staging]
+workers_dev = true
