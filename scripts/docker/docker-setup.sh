@@ -42,16 +42,9 @@ cat > .env << EOF
 DOMAIN=$DOMAIN
 PORT=$PORT
 VITE_API_BASE_URL=/api/v2
-
-# Node.js Configuration
-NODE_ENV=production
 EOF
 
 echo -e "${GREEN}Environment file created successfully.${NC}"
-
-# Create logs directory
-echo -e "\n${GREEN}Creating logs directory...${NC}"
-mkdir -p logs
 
 # Build Docker image
 echo -e "\n${GREEN}Building Docker image...${NC}"
@@ -60,17 +53,17 @@ docker build -t blockhub .
 # Run with Docker Compose
 echo -e "\n${GREEN}Starting BlockHub with Docker Compose...${NC}"
 if [[ "$USE_PROD" =~ ^[Yy]$ ]]; then
-    docker-compose -f scripts/docker-compose.prod.yml up -d
+    docker-compose -f docker-compose.prod.yml up -d
 else
     docker-compose up -d
 fi
 
 # Check if container is running
 if docker ps | grep -q blockhub; then
-    echo -e "\n\n${GREEN}BlockHub is now running!${NC}"
-    echo -e "\nYou can access it @: ${GREEN}http://$DOMAIN:$PORT${NC}"
-    echo -e "To stop BlockHub, run: ${RED}docker-compose down${NC}"
-    echo -e "To view logs, run: ${GREEN}docker-compose logs -f${NC}"
+    echo -e "\n${GREEN}BlockHub is now running!${NC}"
+    echo -e "You can access it at: http://$DOMAIN:$PORT"
+    echo -e "To stop BlockHub, run: docker-compose down"
+    echo -e "To view logs, run: docker-compose logs -f"
 else
     echo -e "\n${RED}Failed to start BlockHub. Please check the logs:${NC}"
     echo "docker-compose logs"
