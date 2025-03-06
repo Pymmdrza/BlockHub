@@ -1,12 +1,13 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { SearchBar } from '../components/SearchBar';
 import { Bitcoin, Activity, BarChart2, Clock, Database, ArrowRight, DollarSign, TrendingUp, Zap } from 'lucide-react';
 import { fetchBitcoinPrice, fetchLatestBlocks, fetchNetworkStats } from '../utils/api';
 import { BitcoinPrice as BitcoinPriceType, BlockData, NetworkInfo, ChartDataPoint } from '../types';
 import { Card, CardContent, CardHeader, CardTitle, Container, StatCard, Spinner, Skeleton, SkeletonText } from '../components/ui';
+import { formatCurrency, formatNumber } from '../utils/format';
 
-export const Home: React.FC = () => {
+const Home: React.FC = () => {
   const [price, setPrice] = useState<BitcoinPriceType | null>(null);
   const [latestBlocks, setLatestBlocks] = useState<BlockData[]>([]);
   const [networkStats, setNetworkStats] = useState<NetworkInfo | null>(null);
@@ -132,10 +133,6 @@ export const Home: React.FC = () => {
     return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
   };
 
-  const formatNumber = (num: number): string => {
-    return num.toLocaleString();
-  };
-
   // Calculate blocks until next retarget
   const getBlocksUntilRetarget = (): string => {
     if (!networkStats || !networkStats.nextRetargetBlock) return "N/A";
@@ -185,7 +182,7 @@ export const Home: React.FC = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         <StatCard
           title="Bitcoin Price"
-          value={price ? `$${price.USD.last.toLocaleString()}` : "$0.00"}
+          value={price ? formatCurrency(price.USD.last) : "$0.00"}
           icon={<Bitcoin className="w-5 h-5" />}
           trend={price ? {
             value: price.USD.change_24h,
@@ -194,7 +191,7 @@ export const Home: React.FC = () => {
           isLoading={isPriceLoading}
           chartData={priceHistory}
           chartColor="#ED8936"
-          description={price ? `Market Cap: $${(networkStats?.marketCap || 0).toLocaleString(undefined, {maximumFractionDigits: 0})}` : undefined}
+          description={networkStats ? `Market Cap: ${formatCurrency(networkStats.marketCap)}` : undefined}
         />
 
         <StatCard
@@ -216,12 +213,12 @@ export const Home: React.FC = () => {
           isLoading={isNetworkStatsLoading}
           chartData={mempoolHistory}
           chartColor="#10B981"
-          description={networkStats ? `${formatNumber(networkStats.unconfirmedTxs)} unconfirmed txs` : undefined}
+          description={networkStats ? `${formatNumber(networkStats.unconfirmedTxs, { notation: 'compact' })} unconfirmed txs` : undefined}
         />
 
         <StatCard
           title="Latest Block"
-          value={networkStats ? networkStats.blockHeight.toLocaleString() : "0"}
+          value={networkStats ? formatNumber(networkStats.blockHeight) : "0"}
           icon={<Database className="w-5 h-5" />}
           onClick={handleLatestBlockClick}
           isLoading={isNetworkStatsLoading}
@@ -234,7 +231,7 @@ export const Home: React.FC = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         <StatCard
           title="24h Transactions"
-          value={networkStats?.txCount24h ? formatNumber(networkStats.txCount24h) : "0"}
+          value={networkStats?.txCount24h ? formatNumber(networkStats.txCount24h, { notation: 'compact' }) : "0"}
           icon={<Activity className="w-5 h-5" />}
           isLoading={isNetworkStatsLoading}
           chartColor="#F59E0B"
@@ -242,7 +239,7 @@ export const Home: React.FC = () => {
 
         <StatCard
           title="24h BTC Sent"
-          value={networkStats?.btcSent24h ? `${formatNumber(networkStats.btcSent24h)} BTC` : "0 BTC"}
+          value={networkStats?.btcSent24h ? `${formatNumber(networkStats.btcSent24h, { notation: 'compact' })} BTC` : "0 BTC"}
           icon={<DollarSign className="w-5 h-5" />}
           isLoading={isNetworkStatsLoading}
           chartColor="#EC4899"
@@ -312,12 +309,12 @@ export const Home: React.FC = () => {
                           <Database className="w-5 h-5 text-orange-500" />
                         </div>
                         <div>
-                          <p className="font-medium">Block #{block.height.toLocaleString()}</p>
+                          <p className="font-medium">Block #{formatNumber(block.height)}</p>
                           <p className="text-sm text-gray-400">{formatTimeAgo(block.time)}</p>
                         </div>
                       </div>
                       <div className="text-right">
-                        <p className="text-sm text-gray-300">{block.txCount} transactions</p>
+                        <p className="text-sm text-gray-300">{formatNumber(block.txCount)} transactions</p>
                         <p className="text-sm text-gray-400">{formatBytes(block.size)}</p>
                       </div>
                     </Link>
@@ -386,11 +383,11 @@ export const Home: React.FC = () => {
                 <div className="space-y-2">
                   <div className="flex justify-between">
                     <span className="text-gray-400">Market Cap:</span>
-                    <span className="text-white">${(networkStats?.marketCap || 0).toLocaleString(undefined, {maximumFractionDigits: 0})}</span>
+                    <span className="text-white">{networkStats ? formatCurrency(networkStats.marketCap) : '$0'}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-gray-400">24h Volume:</span>
-                    <span className="text-white">${(networkStats?.btcSent24h || 0 * (price?.USD.last || 0)).toLocaleString(undefined, {maximumFractionDigits: 0})}</span>
+                    <span className="text-white">{networkStats ? formatCurrency(networkStats.btcSent24h * (price?.USD.last || 0)) : '$0'}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-gray-400">Circulating Supply:</span>
@@ -429,5 +426,7 @@ export const Home: React.FC = () => {
     </Container>
   );
 };
+
+export default Home;
 
 export { Home }
