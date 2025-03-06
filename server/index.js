@@ -131,6 +131,7 @@ app.get('/api/proxy', async (req, res) => {
     const allowedDomains = [
       'api.github.com',
       'blockchain.info',
+      'ws.blockchain.info',
       'btcbook.guarda.co'
     ];
     
