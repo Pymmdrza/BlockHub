@@ -73,11 +73,20 @@ export interface BlockInfo {
   nonce?: number;
   weight?: number;
   difficulty?: number;
-  transactions?: any[];
   reward?: number;
+  transactions?: any[];
 }
 
-// WebSocket Block types
+export interface BlockData {
+  hash: string;
+  height: number;
+  time: number;
+  size: number;
+  txCount: number;
+  miner?: string;
+}
+
+// WebSocket types
 export interface WebSocketBlock {
   hash: string;
   height: number;
@@ -90,7 +99,6 @@ export interface WebSocketBlock {
   blockIndex: number;
 }
 
-// WebSocket Transaction types
 export interface WebSocketTransaction {
   hash: string;
   ver: number;
@@ -125,7 +133,7 @@ export interface WebSocketTransaction {
   }>;
 }
 
-// Network Stats types
+// Network stats types
 export interface NetworkInfo {
   timestamp: number;
   hashRate: number;
@@ -149,46 +157,6 @@ export interface ChartDataPoint {
   value: number;
 }
 
-export interface TransactionFee {
-  timestamp: number;
-  avgFee: number;
-  minFee: number;
-  maxFee: number;
-}
-
-export interface BlockData {
-  hash: string;
-  height: number;
-  time: number;
-  size: number;
-  txCount: number;
-  miner?: string;
-}
-
-// Market data types
-export interface MarketData {
-  price: number;
-  marketCap: number;
-  volume24h: number;
-  change24h: number;
-  timestamp: number;
-}
-
-// Bitcoin network stats for dashboard
-export interface BitcoinStats {
-  hashRate: number;
-  difficulty: number;
-  blockHeight: number;
-  unconfirmedTxs: number;
-  mempoolSize: number;
-  txCount24h: number;
-  btcSent24h: number;
-  avgBlockTime: number;
-  avgFee: number;
-  timestamp: number;
-}
-
-// Blockchain.com Charts API types
 export interface ChartResponse {
   status: string;
   name: string;
@@ -222,14 +190,46 @@ export interface ChartTimeRange {
   days: number;
 }
 
+// Mining pool types
 export interface MiningPoolDistribution {
   name: string;
   share: number;
   color: string;
 }
 
+// Market data types
 export interface MarketDominanceData {
   name: string;
   value: number;
   color: string;
+}
+
+// WebSocket callback types
+export type MessageCallback = (data: any) => void;
+export type ErrorCallback = (error: Event) => void;
+
+// GitHub API types
+export interface GitHubAsset {
+  name: string;
+  content_type: string;
+  size: number;
+  download_count: number;
+  created_at: string;
+  updated_at: string;
+  browser_download_url: string;
+  description?: string;
+}
+
+export interface GitHubRelease {
+  name: string;
+  published_at: string;
+  body: string;
+  assets: GitHubAsset[];
+}
+
+// Format options
+export interface NumberFormatOptions {
+  notation?: 'compact' | 'standard';
+  minimumFractionDigits?: number;
+  maximumFractionDigits?: number;
 }
