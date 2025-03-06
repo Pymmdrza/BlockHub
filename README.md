@@ -4,6 +4,8 @@
 [![Version](https://img.shields.io/badge/version-1.0.3-blue)](https://blockhub.mmdrza.com)
 [![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 
+[![BlockHub Bitcoin Explorer Backend Service](.github/logo-headers.svg)](#)
+
 BlockHub is a modern, real-time Bitcoin blockchain explorer designed to provide comprehensive insights into Bitcoin transactions, addresses, and network activity. The platform offers a user-friendly interface for exploring the Bitcoin blockchain, with features including live transaction monitoring, detailed address analysis, and access to extensive blockchain datasets.
 
 ## Features
