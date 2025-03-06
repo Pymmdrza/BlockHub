@@ -108,13 +108,61 @@ export class BlockchainWebSocket {
       const data = JSON.parse(event.data);
       const op = data.op;
       
+      // Sanitize data before passing to callbacks
+      const sanitizedData = this.sanitizeData(data);
+      
       if (this.messageCallbacks.has(op)) {
         const callbacks = this.messageCallbacks.get(op) || [];
-        callbacks.forEach(callback => callback(data));
+        callbacks.forEach(callback => callback(sanitizedData));
       }
     } catch (error) {
-      console.error('Error parsing WebSocket message:', error);
+      console.error('Error handling WebSocket message:', error);
     }
+  }
+
+  // Sanitize data to ensure it can be cloned
+  private sanitizeData(data: any): any {
+    if (!data) return data;
+    
+    // Handle arrays
+    if (Array.isArray(data)) {
+      return data.map(item => this.sanitizeData(item));
+    }
+    
+    // Handle objects
+    if (typeof data === 'object') {
+      const sanitized: any = {};
+      
+      for (const [key, value] of Object.entries(data)) {
+        // Skip functions and symbols
+        if (typeof value === 'function' || typeof value === 'symbol') {
+          continue;
+        }
+        
+        // Convert BigInt to string
+        if (typeof value === 'bigint') {
+          sanitized[key] = value.toString();
+          continue;
+        }
+        
+        // Handle nested objects/arrays
+        if (value && typeof value === 'object') {
+          sanitized[key] = this.sanitizeData(value);
+          continue;
+        }
+        
+        // Handle primitive values
+        if (value === null || ['string', 'number', 'boolean', 'undefined'].includes(typeof value)) {
+          sanitized[key] = value;
+          continue;
+        }
+      }
+      
+      return sanitized;
+    }
+    
+    // Return primitive values as is
+    return data;
   }
 
   private startPingInterval(): void {

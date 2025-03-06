@@ -146,9 +146,9 @@ export interface NetworkInfo {
   totalTransactions: number;
   avgBlockTime: number;
   avgTransactionFee: number;
-  marketCap?: number;
-  txCount24h?: number;
-  btcSent24h?: number;
+  marketCap: number; // Changed from optional to required
+  txCount24h: number; // Changed from optional to required
+  btcSent24h: number; // Changed from optional to required
 }
 
 // Chart data types

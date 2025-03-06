@@ -1,4 +1,4 @@
-import axios, { AxiosRequestConfig, AxiosResponse } from 'axios';
+import axios from 'axios';
 
 // Create a proxy service to hide actual API endpoints from users
 class ApiProxyService {
@@ -28,8 +28,8 @@ class ApiProxyService {
   // Generic proxy method for any external API
   async proxyRequest(
     endpoint: string, 
-    options: AxiosRequestConfig = {}
-  ): Promise<AxiosResponse> {
+    options: Record<string, any> = {}
+  ): Promise<any> {
     try {
       const headers = {
         ...options.headers,
