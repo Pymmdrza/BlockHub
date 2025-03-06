@@ -1,23 +1,90 @@
 # BlockHub - Bitcoin Blockchain Explorer
 
-![BlockHub Logo](https://img.shields.io/badge/BlockHub-Bitcoin%20Explorer-orange)
-![Version](https://img.shields.io/badge/version-1.0.3-blue)
-![License](https://img.shields.io/badge/license-MIT-green)
+[![BlockHub Logo](https://img.shields.io/badge/BlockHub-Bitcoin%20Explorer-orange)](https://blockhub.mmdrza.com)
+[![Version](https://img.shields.io/badge/version-1.0.3-blue)](https://blockhub.mmdrza.com)
+[![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 
 BlockHub is a modern, real-time Bitcoin blockchain explorer designed to provide comprehensive insights into Bitcoin transactions, addresses, and network activity. The platform offers a user-friendly interface for exploring the Bitcoin blockchain, with features including live transaction monitoring, detailed address analysis, and access to extensive blockchain datasets.
 
-## 🚀 Features
+## Features
 
 - **Real-time Transaction Monitoring**: Watch Bitcoin transactions as they happen
-- **Address Explorer**: View comprehensive details about any Bitcoin address
 - **Block Explorer**: Browse the latest blocks and their contents
 - **Mempool Explorer**: Monitor unconfirmed transactions and fee estimates
+- **Address Explorer**: View comprehensive details about any Bitcoin address
 - **Network Statistics**: Track Bitcoin network metrics in real-time
-- **Datasets**: Access to extensive Bitcoin blockchain datasets
-- **Dark Mode Optimized**: Beautiful dark interface for comfortable viewing
-- **Mobile Responsive**: Fully responsive design for all devices
+- **Datasets**: Access to extensive Bitcoin blockchain datasets (Auto Update Every 24h)
 
-## 🛠️ Technology Stack
+---
+
+## Fast execution BlockHub with Docker and optimized resources
+
+Run with docker from official blockhub image with `latest` tag.
+
+```shell
+docker pull pymmdrza/blockhub:latest
+docker run -d -p 80:80 -p 443:443 --name blockhub pymmdrza/blockhub:latest
+```
+
+
+### Git
+
+```shell
+git clone https://github.com/Pymmdrza/BlockHub
+cd BlockHub
+```
+
+- replace `.env.example` to `.env`
+
+```shell
+chmod +x docker-setup.sh
+./docker-setup.sh
+```
+
+
+### Docker
+
+See [docker-commands.md](docs/docker.md) for a list of useful Docker commands for managing your BlockHub deployment.
+- ُفشقف
+
+
+| Action       | Description                                    | Link                                               |
+|--------------|------------------------------------------------|----------------------------------------------------|
+| Start        | Start the BlockHub Docker Container            | [view](/docs/docker.md#start-blockhub)             |
+| Stop         | Stop the BlockHub Docker Container             | [view](/docs/docker.md#stop-blockhub)              |
+| Logs         | View the logs of the BlockHub Docker Container | [view](/docs/docker.md#view-logs)                  |
+| Rebuild      | Rebuild the BlockHub Docker Container          | [view](/docs/docker.md#rebuild-and-restart)        |
+| Restart      | Restart the BlockHub Docker Container          | [view](/docs/docker.md#rebuild-and-restart)        |
+| Status       | Check Container Status                         | [view](/docs/docker.md#check-container-status)     |
+| Health       | Check Container Health                         | [view](/docs/docker.md#check-container-health)     |
+| Shell        | Enter Container Shell                          | [view](/docs/docker.md#enter-container-shell)      |
+| Nginx        | View Nginx Configuration                       | [view](/docs/docker.md#view-nginx-configuration)   |
+| Nginx Test   | Test Nginx Configuration                       | [view](/docs/docker.md#test-nginx-configuration)   |
+| Nginx Reload | Reload Nginx Configuration                     | [view](/docs/docker.md#reload-nginx-configuration) |
+
+---
+
+### Backup & Restore
+
+| Action     | Description                  | Link                                                 |
+|------------|------------------------------|------------------------------------------------------|
+| Backup     | Backup BlockHub Data         | [view](/docs/docker.md#backup-and-restore)           |
+| Restore    | Restore BlockHub Data        | [view](/docs/docker.md#backup-and-restore)           |
+| Backup Env | Backup Environment Variables | [view](/docs/docker.md#backup-environment-variables) |
+
+---
+
+### Troubleshooting
+
+- Check Nginx Logs [view](/docs/docker.md#check-nginx-logs)
+- Check Container Resource Usage [view](/docs/docker.md#check-container-resource-usage)
+- Restart Container [view](/docs/docker.md#restart-container)
+- Force Remove Container [view](/docs/docker.md#force-remove-container)
+- Clean Up Docker System [view](/docs/docker.md#clean-up-docker-system)
+
+---
+
+## Technology Stack
 
 - **Frontend**: React with TypeScript
 - **Styling**: Tailwind CSS for modern, responsive styling
@@ -27,12 +94,12 @@ BlockHub is a modern, real-time Bitcoin blockchain explorer designed to provide 
 - **API Integration**: Blockchain.com API
 - **Containerization**: Docker for easy deployment
 
-## 📋 Prerequisites
+## Prerequisites
 
 - Docker
 - Docker Compose
 
-## 🔧 Installation
+## Installation
 
 ### Quick Start with Docker
 
@@ -76,70 +143,31 @@ BlockHub is a modern, real-time Bitcoin blockchain explorer designed to provide 
 
 2. Run the SSL setup script:
    ```bash
-   chmod +x ssl-setup.sh
-   ./ssl-setup.sh yourdomain.com
+   chmod +x scripts/ssl-setup.sh
+   ./scripts/ssl-setup.sh yourdomain.com
    ```
 
 3. Start BlockHub with production settings:
+
    ```bash
    docker-compose -f docker-compose.prod.yml up -d
    ```
 
-4. Access BlockHub at `https://yourdomain.com`
+5. Access BlockHub at `https://yourdomain.com`
 
-## 🌐 Environment Variables
-
-BlockHub can be configured using the following environment variables:
-
-| Variable | Description | Default |
-|----------|-------------|---------|
-| DOMAIN | Domain name for the application | localhost |
-| PORT | Port to run the application on | 80 |
-| NGINX_WORKER_PROCESSES | Number of Nginx worker processes | auto |
-| NGINX_WORKER_CONNECTIONS | Maximum connections per worker | 1024 |
-| PROXY_READ_TIMEOUT | Proxy read timeout in seconds | 60 |
-| PROXY_CONNECT_TIMEOUT | Proxy connection timeout in seconds | 60 |
-
-## 📊 API Integration
-
-BlockHub integrates with the following APIs:
-
-- **Blockchain.com API**: For blockchain data, transactions, and blocks
-- **CoinGecko API**: For Bitcoin price information
-- **GitHub API**: For dataset information
-
+   
 The application includes fallback mechanisms to ensure functionality even when APIs are unavailable.
 
-## 🔍 Docker Commands
-
-See [docker-commands.md](docker-commands.md) for a list of useful Docker commands for managing your BlockHub deployment.
-
-## 📦 Project Structure
-
-```
-blockhub/
-├── .env                 # Environment variables
-├── .env.example         # Example environment variables
-├── docker-compose.yml   # Docker Compose configuration
-├── docker-compose.prod.yml # Production Docker Compose configuration
-├── Dockerfile           # Docker configuration
-├── nginx.conf           # Nginx configuration
-├── nginx.ssl.conf       # Nginx configuration with SSL
-├── docker-entrypoint.sh # Docker entrypoint script
-├── docker-setup.sh      # Setup script
-├── ssl-setup.sh         # SSL setup script
-├── renew-ssl.sh         # SSL renewal script
-└── src/                 # Application source code
-```
-
-## 🤝 Contributing
+## Contributing
 
 Contributions are welcome! Please feel free to submit a Pull Request.
 
-## 📄 License
+## License
 
 This project is licensed under the MIT License - see the LICENSE file for details.
 
-## 👨‍💻 Author
+## Programmer
+
+
 
 - **Pymmdrza** - [GitHub](https://github.com/Pymmdrza)
