@@ -59,7 +59,8 @@ router.get('/proxy', async (req, res) => {
       'api.github.com',
       'api.coingecko.com',
       'blockchain.info',
-      'bitcoin.atomicwallet.io'
+      'ws.blockvhain.info',
+      'btcbook.guarda.co'
     ];
     
     const url = new URL(endpoint);
