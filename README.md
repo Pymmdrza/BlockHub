@@ -46,8 +46,7 @@ chmod +x docker-setup.sh
 
 ### Docker
 
-See [docker-commands.md](docs/docker.md) for a list of useful Docker commands for managing your BlockHub deployment.
-- ُفشقف
+See [docs/docker.md](docs/docker.md) for a list of useful Docker commands for managing your BlockHub deployment.
 
 
 | Action       | Description                                    | Link                                               |
