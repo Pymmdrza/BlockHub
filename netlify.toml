@@ -18,4 +18,4 @@
     X-XSS-Protection = "1; mode=block"
     X-Content-Type-Options = "nosniff"
     Referrer-Policy = "strict-origin-when-cross-origin"
-    Content-Security-Policy = "default-src 'self' https: data: 'unsafe-inline' 'unsafe-eval'; connect-src 'self' https://btcbook.guarda.co https://blockchain.info https://api.github.com;"
+    Content-Security-Policy = "default-src 'self' https: wss: data: 'unsafe-inline' 'unsafe-eval'; connect-src 'self' https: wss: https://bitcoin.atomicwallet.io https://blockchain.info https://api.github.com ws://ws.blockchain.info wss://ws.blockchain.info;"
