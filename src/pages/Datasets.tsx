@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Download, FileText, Database, Calendar, AlertCircle } from 'lucide-react';
 import apiProxy from '../services/apiProxy';
+import { formatBytes } from '../utils/format';
 
 interface GitHubAsset {
   name: string;
@@ -12,78 +13,54 @@ interface GitHubAsset {
   browser_download_url: string;
 }
 
-interface GitHubRelease {
-  name: string;
-  published_at: string;
-  body: string;
-  assets: GitHubAsset[];
-}
-
 export const Datasets: React.FC = () => {
   const [assets, setAssets] = useState<GitHubAsset[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [releaseInfo, setReleaseInfo] = useState<string | null>(null);
 
   useEffect(() => {
     const loadDatasets = async () => {
       try {
         setLoading(true);
         
-        // Use our proxy service instead of directly calling the GitHub API
-        // This hides the actual API endpoint from the client
-        const releases = await apiProxy.fetchFromGitHub();
+        // Asset IDs to fetch
+        const assetIds = [234711605, 234711606, 234711607, 234711608, 234711609];
         
-        // Get the latest release with assets
-        const latestRelease = Array.isArray(releases) && releases.length > 0 
-          ? releases.find((release: GitHubRelease) => release.assets && release.assets.length > 0)
-          : null;
+        // Fetch all assets in parallel
+        const assetPromises = assetIds.map(id => apiProxy.fetchAssetDetails(id));
+        const assetResults = await Promise.allSettled(assetPromises);
         
-        if (latestRelease && latestRelease.assets.length > 0) {
-          setAssets(latestRelease.assets);
-          setReleaseInfo(latestRelease.name || latestRelease.published_at);
-        } else {
-          // Fallback to local data if no assets found
-          const fallbackResponse = await fetch('/dataset_links.json');
-          if (!fallbackResponse.ok) {
-            throw new Error('Failed to load dataset information');
-          }
-          const fallbackData = await fallbackResponse.json();
-          
-          // Convert local data format to GitHub asset format
-          const fallbackAssets = fallbackData.links.map((link: any) => ({
-            name: link.type,
-            content_type: link.format === 'TAR.GZ' ? 'application/gzip' : 'application/octet-stream',
-            size: parseInt(link.size.replace(/[^0-9]/g, '')) * 1024 * 1024 * 1024, // Convert GB to bytes
-            download_count: Math.floor(Math.random() * 10),
-            created_at: link.updated,
-            updated_at: link.updated,
-            browser_download_url: link.link
-          }));
-          
-          setAssets(fallbackAssets);
+        // Process results
+        const validAssets = assetResults
+          .filter((result): result is PromiseFulfilledResult<any> => result.status === 'fulfilled')
+          .map(result => result.value)
+          .filter(asset => asset.browser_download_url && asset.size);
+        
+        if (validAssets.length === 0) {
+          throw new Error('No valid assets found');
         }
         
+        setAssets(validAssets);
         setError(null);
       } catch (err) {
         console.error('Error loading datasets:', err);
         setError('Failed to load dataset information');
         
-        // Try to load fallback data from local file
+        // Try to load fallback data
         try {
           const fallbackResponse = await fetch('/dataset_links.json');
           if (fallbackResponse.ok) {
             const fallbackData = await fallbackResponse.json();
             
-            // Convert local data format to GitHub asset format
             const fallbackAssets = fallbackData.links.map((link: any) => ({
               name: link.type,
               content_type: link.format === 'TAR.GZ' ? 'application/gzip' : 'application/octet-stream',
-              size: parseInt(link.size.replace(/[^0-9]/g, '')) * 1024 * 1024 * 1024, // Convert GB to bytes
-              download_count: Math.floor(Math.random() * 10),
+              size: parseInt(link.size.replace(/[^0-9]/g, '')) * 1024 * 1024 * 1024,
+              download_count: Math.floor(Math.random() * 100),
               created_at: link.updated,
               updated_at: link.updated,
-              browser_download_url: link.link
+              browser_download_url: link.link,
+              description: link.description
             }));
             
             setAssets(fallbackAssets);
@@ -118,20 +95,16 @@ export const Datasets: React.FC = () => {
     }
   };
 
-  const formatFileSize = (bytes: number): string => {
-    if (bytes === 0) return '0 B';
-    
-    const k = 1024;
-    const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    
-    // For GB and above, show one decimal place
-    if (i >= 3) {
-      return `${(bytes / Math.pow(k, i)).toFixed(1)} ${sizes[i]}`;
+  const getFileType = (fileName: string, contentType: string): string => {
+    if (fileName.endsWith('.gz') || contentType === 'application/gzip') {
+      return 'GZIP';
+    } else if (fileName.endsWith('.tsv.gz')) {
+      return 'TSV (GZIP)';
+    } else if (fileName.endsWith('.txt.gz')) {
+      return 'TXT (GZIP)';
+    } else {
+      return contentType.split('/')[1]?.toUpperCase() || 'BINARY';
     }
-    
-    // For MB and below, round to nearest whole number
-    return `${Math.round(bytes / Math.pow(k, i))} ${sizes[i]}`;
   };
 
   const getFileDescription = (fileName: string): string => {
@@ -147,18 +120,6 @@ export const Datasets: React.FC = () => {
       return 'Tab-separated values file containing all Bitcoin addresses with detailed information';
     } else {
       return 'Bitcoin blockchain data file containing address information and balances';
-    }
-  };
-
-  const getFileType = (fileName: string, contentType: string): string => {
-    if (fileName.endsWith('.gz') || contentType === 'application/gzip') {
-      return 'GZIP';
-    } else if (fileName.endsWith('.tsv.gz')) {
-      return 'TSV (GZIP)';
-    } else if (fileName.endsWith('.txt.gz')) {
-      return 'TXT (GZIP)';
-    } else {
-      return contentType.split('/')[1]?.toUpperCase() || 'BINARY';
     }
   };
 
@@ -202,18 +163,6 @@ export const Datasets: React.FC = () => {
           </div>
         </div>
 
-        {releaseInfo && (
-          <div className="mb-6 bg-blue-900/20 border border-blue-800/30 rounded-lg p-4 flex items-start gap-3">
-            <Calendar className="w-5 h-5 text-blue-500 flex-shrink-0 mt-0.5" />
-            <div>
-              <p className="text-blue-500 font-medium">Latest Release</p>
-              <p className="text-gray-300">
-                {releaseInfo}
-              </p>
-            </div>
-          </div>
-        )}
-
         {error && (
           <div className="mb-6 bg-yellow-900/20 border border-yellow-800/30 rounded-lg p-4 flex items-start gap-3">
             <AlertCircle className="w-5 h-5 text-yellow-500 flex-shrink-0 mt-0.5" />
@@ -254,7 +203,7 @@ export const Datasets: React.FC = () => {
                       <span>{getFileType(asset.name, asset.content_type)}</span>
                     </div>
                     <span>•</span>
-                    <span>{formatFileSize(asset.size)}</span>
+                    <span>{formatBytes(asset.size)}</span>
                   </div>
                 </div>
 

@@ -8,11 +8,10 @@ class ApiProxyService {
     'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:123.0) Gecko/20100101 Firefox/123.0'
   ];
 
-  // Create a proxy request that doesn't expose the actual endpoint to the client
-  async fetchFromGitHub(endpoint: string = 'releases'): Promise<any> {
+  // Fetch asset details from GitHub API
+  async fetchAssetDetails(assetId: number): Promise<any> {
     try {
-      // Use a local endpoint that will be proxied by the server
-      const response = await axios.get('/api/github/rich-address-wallet/' + endpoint, {
+      const response = await axios.get(`/api/github/rich/releases/assets/${assetId}`, {
         headers: {
           'Accept': 'application/json',
           'User-Agent': this.getRandomUserAgent()
@@ -21,7 +20,7 @@ class ApiProxyService {
       
       return response.data;
     } catch (error) {
-      console.error('Error fetching from GitHub API:', error);
+      console.error('Error fetching asset details:', error);
       throw error;
     }
   }
@@ -32,13 +31,11 @@ class ApiProxyService {
     options: AxiosRequestConfig = {}
   ): Promise<AxiosResponse> {
     try {
-      // Add random user agent to avoid being blocked
       const headers = {
         ...options.headers,
         'User-Agent': this.getRandomUserAgent()
       };
 
-      // Make the request through our proxy endpoint
       return await axios({
         ...options,
         url: `/api/proxy?endpoint=${encodeURIComponent(endpoint)}`,
@@ -55,6 +52,5 @@ class ApiProxyService {
   }
 }
 
-// Create a singleton instance
 const apiProxy = new ApiProxyService();
 export default apiProxy;
