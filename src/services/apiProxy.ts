@@ -1,6 +1,6 @@
-import axios from 'axios';
+// services/apiProxy.ts
+import axios, { AxiosRequestConfig, AxiosResponse } from 'axios';
 
-// Create a proxy service to hide actual API endpoints from users
 class ApiProxyService {
   private userAgents = [
     'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
@@ -8,38 +8,40 @@ class ApiProxyService {
     'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:123.0) Gecko/20100101 Firefox/123.0'
   ];
 
-  // Fetch asset details from GitHub API
-  async fetchAssetDetails(assetId: number): Promise<any> {
+  // Method to fetch the GitHub release data.
+  async fetchReleaseData(releaseId: string | number): Promise<any> {
+    const endpoint = `https://api.github.com/repos/Pymmdrza/Rich-Address-Wallet/releases/${releaseId}`;
+    // Use the existing proxyRequest method.  This is MUCH better.
     try {
-      const response = await axios.get(`/api/github/rich-address-wallet/releases/${assetId}`, {
-        headers: {
-          'Accept': 'application/json',
-          'User-Agent': this.getRandomUserAgent()
-        }
+      const response = await this.proxyRequest(endpoint, {
+          headers: {
+              'Accept': 'application/vnd.github.v3+json', // Good practice to specify the API version.
+          },
       });
-      
       return response.data;
     } catch (error) {
-      console.error('Error fetching asset details:', error);
-      throw error;
+        console.error('Error fetching release data:', error);
+        throw error; // Re-throw the error so the caller can handle it.
     }
   }
 
   // Generic proxy method for any external API
   async proxyRequest(
-    endpoint: string, 
-    options: Record<string, any> = {}
-  ): Promise<any> {
+    endpoint: string,
+    options: AxiosRequestConfig = {}
+  ): Promise<AxiosResponse> {
     try {
+      // Add random user agent to avoid being blocked
       const headers = {
         ...options.headers,
         'User-Agent': this.getRandomUserAgent()
       };
 
+      // Make the request through our proxy endpoint
       return await axios({
         ...options,
-        url: `/api/proxy?endpoint=${encodeURIComponent(endpoint)}`,
-        headers
+        url: `/api/proxy?endpoint=${encodeURIComponent(endpoint)}`, // Correctly encode the endpoint.
+        headers,
       });
     } catch (error) {
       console.error('Error in proxy request:', error);
@@ -52,5 +54,6 @@ class ApiProxyService {
   }
 }
 
+// Create a singleton instance
 const apiProxy = new ApiProxyService();
 export default apiProxy;
