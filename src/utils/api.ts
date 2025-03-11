@@ -1,6 +1,7 @@
-import axios from 'axios';
-import { AddressResponse, TransactionResponse, BitcoinPrice, LiveTransaction, NetworkInfo, BlockData, BlockInfo } from '../types';
+import axios, { AxiosError, AxiosInstance, AxiosRequestConfig } from 'axios';
+import { AddressResponse, TransactionResponse, BitcoinPrice, LiveTransaction, NetworkInfo, BlockData, BlockInfo, BlockchainTickerResponse } from '../types';
 import blockApi from './blockApi';
+import { formatNumber } from './format';
 
 // Base URL should be absolute when running in Docker
 const API_BASE_URL = '/api/v2';
@@ -39,12 +40,16 @@ const blockchainApi = axios.create({
 
 // Add request interceptor to rotate User-Agent
 bitcoinApi.interceptors.request.use((config) => {
-  config.headers['User-Agent'] = getRandomUserAgent();
+  if (config.headers) {
+    config.headers['User-Agent'] = getRandomUserAgent();
+  }
   return config;
 });
 
 blockchainApi.interceptors.request.use((config) => {
-  config.headers['User-Agent'] = getRandomUserAgent();
+  if (config.headers) {
+    config.headers['User-Agent'] = getRandomUserAgent();
+  }
   return config;
 });
 
@@ -57,7 +62,7 @@ const retryRequest = async <T>(fn: () => Promise<T>, retries = MAX_RETRIES): Pro
   try {
     return await fn();
   } catch (error) {
-    if (retries > 0 && axios.isAxiosError(error) && (error.response?.status ?? 500) >= 500) {
+    if (retries > 0 && error instanceof AxiosError && (error.response?.status ?? 500) >= 500) {
       console.warn(`Request failed, retrying... (${retries} attempts left)`);
       await sleep(RETRY_DELAY);
       return retryRequest(fn, retries - 1);
@@ -72,7 +77,7 @@ export const fetchBitcoinPrice = async (): Promise<BitcoinPrice> => {
     const sources = [
       // Primary source: blockchain.info ticker
       async () => {
-        const response = await blockchainApi.get('/ticker', {
+        const response = await blockchainApi.get<BlockchainTickerResponse>('/ticker', {
           timeout: 5000,
           headers: {
             'Cache-Control': 'no-cache',
@@ -103,7 +108,14 @@ export const fetchBitcoinPrice = async (): Promise<BitcoinPrice> => {
       
       // Fallback source: coingecko API
       async () => {
-        const response = await axios.get('https://api.coingecko.com/api/v3/simple/price', {
+        interface CoinGeckoResponse {
+          bitcoin?: {
+            usd?: number;
+            usd_24h_change?: number;
+          };
+        }
+        
+        const response = await axios.get<CoinGeckoResponse>('https://api.coingecko.com/api/v3/simple/price', {
           params: {
             ids: 'bitcoin',
             vs_currencies: 'usd',
@@ -170,5 +182,16 @@ export const generateNetworkChartData = blockApi.generateNetworkChartData;
 
 export const formatBitcoinValue = (value: string | number): string => {
   const numValue = typeof value === 'string' ? parseFloat(value) : value;
-  return isNaN(numValue) ? '0.00000000' : (numValue / 100000000).toFixed(8);
+  if (isNaN(numValue)) return '0.00000000';
+  
+  const btcValue = numValue / 100000000;
+  
+  if (btcValue >= 1000000) {
+    return `${(btcValue / 1000000).toFixed(2)}M BTC`;
+  }
+  if (btcValue >= 1000) {
+    return `${(btcValue / 1000).toFixed(2)}K BTC`;
+  }
+  
+  return `${btcValue.toFixed(8)} BTC`;
 };
