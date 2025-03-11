@@ -60,7 +60,7 @@ export default defineConfig({
     outDir: 'dist',
     assetsDir: 'assets',
     // Set base path for GitHub Pages deployment
-    base: '/BlockHub/',
+    base: './',
     rollupOptions: {
       output: {
         entryFileNames: 'assets/js/[name].js',
