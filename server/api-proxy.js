@@ -22,7 +22,7 @@ router.get('/github/rich-address-wallet/:endpoint', async (req, res) => {
     }
     
     // Make the actual request to GitHub API
-    const response = await axios.get(`https://api.github.com/repos/Pymmdrza/Rich-Address-Wallet/releases/assets/${endpoint}`, {
+    const response = await axios.get(`https://api.github.com/repos/Pymmdrza/Rich-Address-Wallet/releases/${endpoint}`, {
       headers: {
         'Accept': 'application/json',
         'User-Agent': 'BlockHub-App/1.0'
