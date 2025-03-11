@@ -1,0 +1,355 @@
+name: G-Analysis (Gemini AI Code Analysis & Review)
+
+on:
+  workflow_dispatch: # Allows manual triggering of the action
+    inputs:
+      language: # Input for selecting the project language
+        description: 'Select the main language or framework of your project for code analysis'
+        required: true
+        default: 'Python'
+        type: choice
+        options:
+          - Ada
+          - Actionscript
+          - C, C++
+          - FastApi (python)
+          - Flask (python)
+          - Gem
+          - Go
+          - Gradio (python)
+          - HTML/CSS
+          - Haskell
+          - Java
+          - Javascript
+          - Kotlin
+          - Lua
+          - Makefile
+          - Pascal
+          - Powershell
+          - Postscript
+          - Purescript
+          - PHP
+          - Perl
+          - Python
+          - R
+          - React
+          - Rubby
+          - Rust
+          - SQL
+          - Shell
+          - Streamlit (python)
+          - Swift
+          - Objective-c
+          - Tornado (python)
+          - Typescript
+
+  push:
+    branches: [ main ] # or specify your desired branches
+  pull_request:
+    branches: [ main ] # or specify your desired branches
+
+jobs:
+  analyze-code:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0 # Fetch full history for branch operations
+
+      # Main Core Script for action
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+
+      - name: Install requests library
+        run: pip install requests
+
+      - name: Determine Code File Extensions based on Language
+        id: determine_extensions
+        run: |
+          LANGUAGE="${{ inputs.language }}"
+          case "$LANGUAGE" in
+            "Ada")
+              EXTENSIONS="*.ada *.adb *.ads"
+              ;;
+            "Actionscript")
+              EXTENSIONS="*.as"
+              ;;
+            "C, C++")
+              EXTENSIONS="*.c *.cpp *.h *.hpp *.cc *.cxx *.hxx"
+              ;;
+            "FastApi (python)"|"Flask (python)"|"Gradio (python)"|"Streamlit (python)"|"Tornado (python)"|"Python")
+              EXTENSIONS="*.py"
+              ;;
+            "Gem"|"Rubby") # "Rubby" is likely a typo for "Ruby"
+              EXTENSIONS="*.rb"
+              ;;
+            "Go")
+              EXTENSIONS="*.go"
+              ;;
+            "HTML/CSS")
+              EXTENSIONS="*.html *.css"
+              ;;
+            "Haskell")
+              EXTENSIONS="*.hs *.lhs"
+              ;;
+            "Java")
+              EXTENSIONS="*.java"
+              ;;
+            "Javascript")
+              EXTENSIONS="*.js *.jsx"
+              ;;
+            "Kotlin")
+              EXTENSIONS="*.kt *.kts"
+              ;;
+            "Lua")
+              EXTENSIONS="*.lua"
+              ;;
+            "Makefile")
+              EXTENSIONS="Makefile makefile GNUmakefile"
+              ;;
+            "Pascal")
+              EXTENSIONS="*.pas *.pp *.lpr"
+              ;;
+            "Powershell")
+              EXTENSIONS="*.ps1 *.psm1 *.psd1"
+              ;;
+            "Postscript")
+              EXTENSIONS="*.ps *.eps *.ai"
+              ;;
+            "Purescript")
+              EXTENSIONS="*.purs"
+              ;;
+            "PHP")
+              EXTENSIONS="*.php *.phtml *.php5 *.phps"
+              ;;
+            "Perl")
+              EXTENSIONS="*.pl *.pm"
+              ;;
+            "R")
+              EXTENSIONS="*.R *.r"
+              ;;
+            "React")
+              EXTENSIONS="*.jsx *.tsx *.js *.ts"
+              ;;
+            "Rust")
+              EXTENSIONS="*.rs"
+              ;;
+            "SQL")
+              EXTENSIONS="*.sql"
+              ;;
+            "Shell")
+              EXTENSIONS="*.sh"
+              ;;
+            "Swift")
+              EXTENSIONS="*.swift"
+              ;;
+            "Objective-c")
+              EXTENSIONS="*.m *.mm *.h"
+              ;;
+            "Typescript")
+              EXTENSIONS="*.ts *.tsx *.js *.jsx"
+              ;;
+            *) # Default case if language is not recognized or for HTML/CSS if not selected explicitly
+              EXTENSIONS="*.html *.css *.js *.py *.ts *.go *.rb *.swift *.c *.cpp *.h *.hpp *.php *.sql *.sh *.jsx *.tsx *.R *.r *.kt *.kts *.hs *.lhs *.lua *.pl *.pm *.ada *.adb *.ads *.as *.cc *.cxx *.hxx *.pas *.pp *.lpr *.ps1 *.psm1 *.psd1 *.ps *.eps *.ai *.purs *.phtml *.php5 *.phps *.m *.mm" # A more general set of extensions
+              echo "Warning: Language '${{ inputs.language }}' not specifically configured. Using a broader set of file extensions."
+              ;;
+          esac
+          echo "::set-output name=extensions::$EXTENSIONS" # Set output for next step
+
+      - name: Run Code Analysis with Gemini
+        id: gemini_analysis
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }} # Store your API key in GitHub secrets
+        run: |
+          REPO_PATH=$GITHUB_WORKSPACE  # Repository path in GitHub Actions
+          CODE_EXTENSIONS="${{ steps.determine_extensions.outputs.extensions }}" # Get extensions from previous step
+          SELECTED_LANGUAGE="${{ inputs.language }}" # Get selected language input
+
+          # Function to read file content
+          read_file_content() {
+            local file_path="$1"
+            if [ -f "$file_path" ]; then
+              cat "$file_path"
+            else
+              echo "Error: File not found: $file_path"
+              return 1
+            fi
+          }
+
+          # Collect list of code files based on extensions
+          CODE_FILES=$(find "$REPO_PATH" -name "$CODE_EXTENSIONS" -print)
+
+          # Loop through each code file for analysis
+          ANALYSIS_RESULTS=""
+          ISSUE_FILES="" # To store list of files with issues
+          IFS=$'\n' read -r -d '' -a FILES_ARRAY <<< "$CODE_FILES"
+          for file_path in "${FILES_ARRAY[@]}"; do
+            if [ -n "$file_path" ]; then # Ensure file path is not empty
+              echo "Analyzing file: $file_path"
+              file_content=$(read_file_content "$file_path")
+
+              # Construct API request to Gemini
+              API_URL="https://generative-language.googleapis.com/v1beta/models/gemini-pro:generateContent?key=$GEMINI_API_KEY" # **Important: Replace with actual Gemini API URL if different**
+              PROMPT_PREFIX="Analyze the following code"
+              PROMPT_LANGUAGE_INFO="primarily written in $SELECTED_LANGUAGE"
+              if [[ "$SELECTED_LANGUAGE" == "Flask (python)" ]]; then
+                  PROMPT_LANGUAGE_INFO="written using the Flask framework in Python"
+              elif [[ "$SELECTED_LANGUAGE" == "FastApi (python)" ]]; then
+                  PROMPT_LANGUAGE_INFO="written using the FastAPI framework in Python"
+              elif [[ "$SELECTED_LANGUAGE" == "Tornado (python)" ]]; then
+                  PROMPT_LANGUAGE_INFO="written using the Tornado framework in Python"
+              elif [[ "$SELECTED_LANGUAGE" == "Streamlit (python)" ]]; then
+                  PROMPT_LANGUAGE_INFO="written using the Streamlit framework in Python"
+              elif [[ "$SELECTED_LANGUAGE" == "Gradio (python)" ]]; then
+                  PROMPT_LANGUAGE_INFO="written using the Gradio framework in Python"
+              fi
+
+
+              PROMPT="$PROMPT_PREFIX, $PROMPT_LANGUAGE_INFO, for inconsistencies, potential issues, and errors:\n\n\`\`\`\n$file_content\n\`\`\`\n\nProvide a report of issues as a list, mentioning file name and relevant line numbers." # Prompt for Gemini, including language info
+
+              PAYLOAD='{"contents": [{"parts": [{"text": "'"$PROMPT"'"}]}]}'
+
+              RESPONSE=$(curl -s -X POST \
+                -H "Content-Type: application/json" \
+                -d "$PAYLOAD" \
+                "$API_URL")
+
+              # Process API response and extract results
+              if jq .candidates "$RESPONSE" > /dev/null 2>&1; then # Check if response is valid JSON
+                ANALYSIS=$(echo "$RESPONSE" | jq -r '.candidates[0].content.parts[0].text')
+                if [[ -n "$ANALYSIS" && "$ANALYSIS" != "No issues found." ]]; then # Check for non-empty and not "No issues found."
+                  ANALYSIS_RESULTS+="$ANALYSIS\n" # Accumulate analysis results (just the text)
+                  ISSUE_FILES+="$file_path\n" # Add file to list of issue files
+                  echo "::warning file=$file_path,title=Potential Code Issues::$(echo "$ANALYSIS" | sed 's/%/%25/g; s/\n/%0A/g; s/\r/%0D/g')" # Report as GitHub warning
+                else
+                  echo "No issues found in $file_path according to Gemini."
+                fi
+              else
+                echo "Error: Gemini API response is not in expected JSON format or contains errors."
+                echo "API Response: $RESPONSE"
+                exit 1 # Exit with error if API issue
+              fi
+            fi
+          done
+
+          echo "::set-output name=analysis_output::$ANALYSIS_RESULTS" # Output the raw analysis results for the next step
+          echo "::set-output name=issue_files::$ISSUE_FILES" # Output list of files with issues
+
+      - name: Generate Score Image and Report
+        id: score_report
+        run: |
+          ANALYSIS_OUTPUT="${{ steps.gemini_analysis.outputs.analysis_output }}" # Get analysis output from previous step
+          ISSUE_COUNT=$(echo "$ANALYSIS_OUTPUT" | grep -c .) # Count lines in analysis output as issue count
+
+          # Determine score category and color
+          if [ "$ISSUE_COUNT" -eq 0 ]; then
+            SCORE_CATEGORY="Good"
+            SCORE_COLOR="green"
+            SCORE_PERCENTAGE="+100%"
+          elif [ "$ISSUE_COUNT" -le 5 ]; then # Adjust threshold as needed
+            SCORE_CATEGORY="Medium"
+            SCORE_COLOR="yellow"
+            SCORE_PERCENTAGE="-50%"
+          else
+            SCORE_CATEGORY="Bad"
+            SCORE_COLOR="red"
+            SCORE_PERCENTAGE="-80%"
+          fi
+
+          # Generate SVG Image (Simple Circle with Arc and Text)
+          SVG_IMAGE=$(cat <<EOF
+
+          <svg width="120" height="140" viewBox="0 0 120 140" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="60" cy="60" r="50" fill="#e0e0e0"/>
+          <path d="M 60 10 A 50 50 0 0 1 60 110" fill="none" stroke="${SCORE_COLOR}" stroke-width="10" stroke-linecap="round"/>
+          <text x="60" y="70" text-anchor="middle" dominant-baseline="middle" font-size="24" font-weight="bold" fill="${SCORE_COLOR}">${SCORE_PERCENTAGE}</text>
+          <text x="60" y="120" text-anchor="middle" dominant-baseline="middle" font-size="16" fill="#555">score</text>
+          </svg>
+          EOF)
+          echo "::set-output name=score_svg::$SVG_IMAGE" # Output SVG for later use in README
+
+          # Output Report with SVG Image and Analysis Results
+          echo "## Gemini Code Analysis Report" >> $GITHUB_STEP_SUMMARY
+          echo "### Code Quality Score: ${SCORE_CATEGORY}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "<div>" >> $GITHUB_STEP_SUMMARY # Start a div for better formatting
+          echo "$SVG_IMAGE" >> $GITHUB_STEP_SUMMARY # Embed SVG image
+          echo "</div>" >> $GITHUB_STEP_SUMMARY # End div
+          echo "" >> $GITHUB_STEP_SUMMARY # Add some spacing
+          if [ -n "$ANALYSIS_OUTPUT" ]; then
+            echo "### Detailed Analysis Issues:" >> $GITHUB_STEP_SUMMARY
+            echo "\`\`\`text" >> $GITHUB_STEP_SUMMARY
+            echo "$ANALYSIS_OUTPUT" >> $GITHUB_STEP_SUMMARY # Output detailed analysis
+            echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+            echo "Potential code issues found. See annotations in files or step summary for details."
+            exit 1 # Exit with error if issues found (optional)
+          else
+            echo "### No Code Issues Found by Gemini" >> $GITHUB_STEP_SUMMARY
+            echo "Code analysis completed successfully. No issues detected."
+          fi
+
+      - name: Create Analysis Branch
+        id: create_branch
+        if: steps.gemini_analysis.outputs.analysis_output # Only create branch if issues found
+        run: |
+          ANALYSIS_BRANCH_NAME="gemini-code-analysis-branch"
+          git checkout -b "$ANALYSIS_BRANCH_NAME" || git checkout "$ANALYSIS_BRANCH_NAME" # Create or switch to the branch
+          echo "::set-output name=branch_name::$ANALYSIS_BRANCH_NAME"
+
+      - name: Copy Repository Files to Analysis Branch
+        if: steps.create_branch.outputs.branch_name # Only copy if branch was created
+        run: |
+          BRANCH_NAME="${{ steps.create_branch.outputs.branch_name }}"
+          rsync -avz ./ ../"$BRANCH_NAME" --exclude=".git" # Copy all files except .git directory
+
+      - name: Simulate Correcting Issue Files (Replace with Gemini Correction Logic) # **REPLACE THIS SIMULATION**
+        if: steps.gemini_analysis.outputs.analysis_output # Only correct if analysis found issues
+        run: |
+          ISSUE_FILES="${{ steps.gemini_analysis.outputs.issue_files }}"
+          BRANCH_NAME="${{ steps.create_branch.outputs.branch_name }}"
+          cd "../$BRANCH_NAME" # Change directory to the analysis branch
+
+          IFS=$'\n' read -r -d '' -a ISSUE_FILES_ARRAY <<< "$ISSUE_FILES"
+          for file_path in "${ISSUE_FILES_ARRAY[@]}"; do
+            if [ -n "$file_path" ]; then
+              echo "Simulating correction for: $file_path"
+              echo "This file has been automatically corrected by Gemini based on code analysis." > "$file_path" # **SIMULATED CORRECTION: Overwrite file content**
+            fi
+          done
+          cd - # Change back to original directory
+
+      - name: Update README.md with Score Badge
+        if: steps.create_branch.outputs.branch_name # Only update README if branch was created
+        run: |
+          BRANCH_NAME="${{ steps.create_branch.outputs.branch_name }}"
+          SCORE_SVG="${{ steps.score_report.outputs.score_svg }}"
+          cd "../$BRANCH_NAME" # Change directory to the analysis branch
+
+          if [ -f "README.md" ]; then
+            echo "Updating README.md with score badge..."
+            sed -i "1i$SCORE_SVG" README.md # Insert SVG badge at the beginning of README.md
+          else
+            echo "README.md not found. Skipping badge insertion."
+          fi
+          cd - # Change back to original directory
+
+
+      - name: Commit Changes to Analysis Branch
+        if: steps.create_branch.outputs.branch_name # Only commit if branch was created
+        run: |
+          BRANCH_NAME="${{ steps.create_branch.outputs.branch_name }}"
+          git config --local user.email "actions@github.com"
+          git config --local user.name "GitHub Actions"
+          cd "../$BRANCH_NAME" # Change directory to the analysis branch
+          git add . # Add all changes in the analysis branch
+          git commit -m "Apply Gemini Code Analysis suggestions and update README" || echo "No changes to commit" # Commit only if there are changes
+          cd - # Change back to original directory
+
+      - name: Push Analysis Branch
+        if: steps.create_branch.outputs.branch_name # Only push if branch was created
+        run: |
+          BRANCH_NAME="${{ steps.create_branch.outputs.branch_name }}"
+          git push origin "$BRANCH_NAME"
