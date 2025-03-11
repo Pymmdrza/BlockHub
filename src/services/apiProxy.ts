@@ -11,7 +11,7 @@ class ApiProxyService {
   // Fetch asset details from GitHub API
   async fetchAssetDetails(assetId: number): Promise<any> {
     try {
-      const response = await axios.get(`/api/github/rich-address-wallet/releases/assets/${assetId}`, {
+      const response = await axios.get(`/api/github/rich-address-wallet/releases/${assetId}`, {
         headers: {
           'Accept': 'application/json',
           'User-Agent': this.getRandomUserAgent()
