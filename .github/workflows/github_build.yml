@@ -43,5 +43,5 @@ jobs:
       - name: Archive Build Artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: build-output
+          name: BlockHub_${{env.process.id}}
           path: dist/
