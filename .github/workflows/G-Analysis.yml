@@ -1,5 +1,4 @@
-name: G-Analysis (Gemini AI Code Analysis & Review)
-
+name: G-Analysis (Gemini AI Code Analysis)
 on:
   workflow_dispatch: # Allows manual triggering of the action
     inputs:
@@ -25,11 +24,11 @@ on:
           - Lua
           - Makefile
           - Pascal
+          - Perl
+          - PHP
           - Powershell
           - Postscript
           - Purescript
-          - PHP
-          - Perl
           - Python
           - R
           - React
@@ -212,10 +211,15 @@ jobs:
 
               PAYLOAD='{"contents": [{"parts": [{"text": "'"$PROMPT"'"}]}]}'
 
+              echo "DEBUG: API Request URL: $API_URL"  # Debug URL
+              echo "DEBUG: API Request Payload: $PAYLOAD" # Debug Payload
+
               RESPONSE=$(curl -s -X POST \
                 -H "Content-Type: application/json" \
                 -d "$PAYLOAD" \
                 "$API_URL")
+
+              echo "DEBUG: Raw API Response: $RESPONSE" # **Debug: Print Raw Response**
 
               # Process API response and extract results
               if jq .candidates "$RESPONSE" > /dev/null 2>&1; then # Check if response is valid JSON
