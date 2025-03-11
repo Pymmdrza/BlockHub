@@ -36,7 +36,7 @@ jobs:
           curl -I http://localhost:9000 || echo "Server did not start!"
 
       - name: Archive Build Artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: build-output
           path: dist/
