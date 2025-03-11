@@ -20,7 +20,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: 18  # نسخه Node.js را بر اساس پروژه تنظیم کنید
+          node-version: 18
           cache: 'npm'
 
       - name: Install Dependencies
@@ -35,6 +35,11 @@ jobs:
           sleep 5
           curl -I http://localhost:9000 || echo "Server did not start!"
 
+      - name: Move Images to /assets/img/
+        run: |
+          mkdir -p dist/assets/img
+          mv dist/img/* dist/assets/img/ || echo "No images found, skipping move."
+      
       - name: Archive Build Artifacts
         uses: actions/upload-artifact@v4
         with:
