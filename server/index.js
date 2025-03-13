@@ -197,7 +197,7 @@ app.use((req, res, next) => {
   next();
 });
 
-// For any request that doesn't match the above, send the index.html file
+// Handle client-side routing
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, '../dist/index.html'));
 });

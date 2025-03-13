@@ -86,7 +86,7 @@ export const Transaction: React.FC = () => {
   const confirmationStatus = data.confirmations > 0 ? (
     <div className="flex items-center gap-2 text-green-400">
       <CheckCircle2 className="w-5 h-5" />
-      <span>Confirmed</span>
+      <span>Confirmed ({data.confirmations} confirmations)</span>
     </div>
   ) : (
     <div className="flex items-center gap-2 text-yellow-400">

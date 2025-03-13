@@ -249,6 +249,27 @@ export interface BlockchainStatsResponse {
   totalbc: number;
 }
 
+// Blockchain API response types
+export interface BlockchainTransaction {
+  hash: string;
+  block_height: number;
+  time: number;
+  confirmations: number;
+  fee: number;
+  size: number;
+  total: number;
+  inputs: Array<{
+    prev_out: {
+      addr?: string;
+      value: number;
+    };
+  }>;
+  out: Array<{
+    addr?: string;
+    value: number;
+  }>;
+}
+
 // Bitcoin price types
 export interface BitcoinPrice {
   USD: {

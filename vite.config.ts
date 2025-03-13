@@ -59,8 +59,8 @@ export default defineConfig({
   build: {
     outDir: 'dist',
     assetsDir: 'assets',
-    // Set base path for GitHub Pages deployment
-    base: './',
+    // Set base path for production deployment
+    base: '/',
     rollupOptions: {
       output: {
         entryFileNames: 'assets/js/[name].js',

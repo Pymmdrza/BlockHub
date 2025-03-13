@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { HashRouter as Router, Routes, Route, Link, useNavigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Link, useNavigate } from 'react-router-dom';
 import { Home } from './pages/Home';
 import { Address } from './pages/Address';
 import { Transaction } from './pages/Transaction';
@@ -77,7 +77,7 @@ function HeaderSearch() {
 
 function App() {
   return (
-    <Router>
+    <Router basename="/">
       <div className="min-h-screen bg-[#0B1017] text-gray-100 flex flex-col">
         <nav className="sticky top-0 z-50 bg-[#0E141B] shadow-md border-b border-gray-800">
           <div className="max-w-7xl mx-auto px-4">
