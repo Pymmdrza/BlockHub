@@ -10,7 +10,7 @@ class ApiProxyService {
 
   // Method to fetch the GitHub release data.
   async fetchReleaseData(releaseId: string | number): Promise<any> {
-    const endpoint = `https://api.github.com/repos/Pymmdrza/Rich-Address-Wallet/releases/${releaseId}`;
+    const endpoint = `https://api.github.com/repos/Pymmdrza/Rich-Address-Wallet/releases/${releaseId}/assets`;
     // Use the existing proxyRequest method.  This is MUCH better.
     try {
       const response = await this.proxyRequest(endpoint, {
