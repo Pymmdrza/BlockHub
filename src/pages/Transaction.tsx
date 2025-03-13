@@ -43,8 +43,9 @@ export const Transaction: React.FC = () => {
         
         setData(result);
       } catch (err) {
+        const errorMessage = err instanceof Error ? err.message : 'Failed to load transaction information';
         console.error('Error loading transaction data:', err);
-        setError('Failed to load transaction information');
+        setError(errorMessage);
       } finally {
         setLoading(false);
       }
