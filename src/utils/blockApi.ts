@@ -35,19 +35,56 @@ blockchainApi.interceptors.request.use((config) => {
   return config;
 });
 
+// Cache for latest block height
+let cachedBlockHeight: number | null = null;
+
+/**
+ * Get the latest block height
+ */
+const getLatestBlockHeight = async (): Promise<number> => {
+  if (cachedBlockHeight !== null) {
+    return cachedBlockHeight;
+  }
+
+  try {
+    // Try to get the latest block height from the API
+    const response = await blockchainApi.get('/latestblock?format=json');
+    if (response.data?.height) {
+      cachedBlockHeight = response.data.height;
+      return response.data.height;
+    }
+
+    // If that fails, try alternative API
+    const altResponse = await axios.get('/api/v2/stats');
+    if (altResponse.data?.blockHeight) {
+      cachedBlockHeight = altResponse.data.blockHeight;
+      return altResponse.data.blockHeight;
+    }
+
+    throw new Error('Could not get latest block height');
+  } catch (error) {
+    console.warn('Failed to get latest block height:', error);
+    // Use a reasonable default
+    return 830000;
+  }
+};
+
 /**
  * Generate mock blocks for testing or API failure
  */
-const generateMockBlocks = (limit: number): BlockData[] => {
+const generateMockBlocks = async (limit: number): Promise<BlockData[]> => {
   const mockBlocks: BlockData[] = [];
   const now = Math.floor(Date.now() / 1000);
   const miners = ['Foundry USA', 'AntPool', 'F2Pool', 'Binance Pool', 'ViaBTC'];
   
+  // Get the latest block height to use as starting point
+  const latestHeight = await getLatestBlockHeight();
+  
   for (let i = 0; i < limit; i++) {
     mockBlocks.push({
       hash: `000000000000000000${Math.random().toString(16).substring(2, 14)}`,
-      height: 800000 - i,
-      time: now - (i * 600),
+      height: latestHeight - i,
+      time: now - (i * 600), // Approximately 10 minutes per block
       size: 1000000 + Math.floor(Math.random() * 500000),
       txCount: 2000 + Math.floor(Math.random() * 1000),
       miner: miners[Math.floor(Math.random() * miners.length)]
@@ -72,7 +109,7 @@ export const fetchLatestBlocks = async (limit: number = 10): Promise<BlockData[]
         throw new Error('Invalid block data format received');
       }
       
-      return response.data.blocks.slice(0, limit).map((block: any) => ({
+      const blocks = response.data.blocks.slice(0, limit).map((block: any) => ({
         hash: block.hash || '',
         height: block.height || 0,
         time: block.time || Math.floor(Date.now() / 1000),
@@ -80,6 +117,13 @@ export const fetchLatestBlocks = async (limit: number = 10): Promise<BlockData[]
         txCount: block.n_tx || 0,
         miner: extractMinerFromCoinbase(block.miner || '')
       }));
+
+      // Update cached block height if we got valid data
+      if (blocks.length > 0 && blocks[0].height > 0) {
+        cachedBlockHeight = blocks[0].height;
+      }
+
+      return blocks;
     } catch (primaryError) {
       console.warn('Primary API failed, trying alternative:', primaryError);
       
@@ -95,17 +139,23 @@ export const fetchLatestBlocks = async (limit: number = 10): Promise<BlockData[]
         throw new Error('Invalid block data from alternative API');
       }
       
-      // If alternative API returns array directly
+      let blocks: BlockData[] = [];
+      
+      // Handle different API response structures
       if (Array.isArray(altResponse.data)) {
-        return altResponse.data.slice(0, limit);
+        blocks = altResponse.data.slice(0, limit);
+      } else if (altResponse.data.blocks && Array.isArray(altResponse.data.blocks)) {
+        blocks = altResponse.data.blocks.slice(0, limit);
+      } else {
+        throw new Error('Unexpected data structure from alternative API');
       }
-      
-      // If alternative API has different structure
-      if (altResponse.data.blocks && Array.isArray(altResponse.data.blocks)) {
-        return altResponse.data.blocks.slice(0, limit);
+
+      // Update cached block height if we got valid data
+      if (blocks.length > 0 && blocks[0].height > 0) {
+        cachedBlockHeight = blocks[0].height;
       }
-      
-      throw new Error('Unexpected data structure from alternative API');
+
+      return blocks;
     }
   } catch (error) {
     console.warn('All APIs failed, using mock data:', error);
@@ -131,6 +181,11 @@ export const fetchNetworkStats = async (): Promise<NetworkInfo> => {
       
       if (!stats.data) {
         throw new Error('Invalid stats data received');
+      }
+
+      // Update cached block height
+      if (latestBlock.data?.height) {
+        cachedBlockHeight = latestBlock.data.height;
       }
       
       return {
@@ -163,6 +218,11 @@ export const fetchNetworkStats = async (): Promise<NetworkInfo> => {
       if (!altResponse.data) {
         throw new Error('Invalid stats data from alternative API');
       }
+
+      // Update cached block height if available
+      if (altResponse.data.blockHeight) {
+        cachedBlockHeight = altResponse.data.blockHeight;
+      }
       
       return altResponse.data;
     }
@@ -174,9 +234,9 @@ export const fetchNetworkStats = async (): Promise<NetworkInfo> => {
       hashRate: 350.5,
       difficulty: 78.3,
       unconfirmedTxs: 12500,
-      blockHeight: 800000,
+      blockHeight: await getLatestBlockHeight(),
       latestBlockHash: '000000000000000000' + Math.random().toString(16).substring(2, 14),
-      nextRetargetBlock: Math.ceil(800000 / 2016) * 2016,
+      nextRetargetBlock: Math.ceil((await getLatestBlockHeight()) / 2016) * 2016,
       mempoolSize: 250,
       totalTransactions: 850000000,
       avgBlockTime: 9.8,
