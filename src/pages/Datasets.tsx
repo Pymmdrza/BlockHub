@@ -36,7 +36,7 @@ export const Datasets: React.FC = () => {
         // Call the fetchReleaseData method.  Pass in the necessary parameters.
         const releaseData = await apiProxy.fetchReleaseData(201896251);
 
-        const fetchedAssets: GitHubAsset[] = releaseData.assets.map((asset: any) => ({
+        const fetchedAssets: GitHubAsset[] = releaseData.map((asset: any) => ({
           id: asset.id,
           name: asset.name,
           content_type: asset.content_type,
