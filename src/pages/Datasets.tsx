@@ -14,16 +14,6 @@ interface GitHubAsset {
   browser_download_url: string;
 }
 
-interface FallbackAsset {
-  id: string;
-  type: string;
-  format: string;
-  size: string;
-  updated: string;
-  link: string;
-  description: string;
-}
-
 export const Datasets: React.FC = () => {
   const [assets, setAssets] = useState<GitHubAsset[]>([]);
   const [loading, setLoading] = useState(true);
@@ -33,7 +23,6 @@ export const Datasets: React.FC = () => {
     const loadDatasets = async () => {
       try {
         setLoading(true);
-        // Call the fetchReleaseData method.  Pass in the necessary parameters.
         const releaseData = await apiProxy.fetchReleaseData(201896251);
 
         const fetchedAssets: GitHubAsset[] = releaseData.map((asset: any) => ({
@@ -52,34 +41,8 @@ export const Datasets: React.FC = () => {
       } catch (err: any) {
         console.error('Error loading datasets:', err);
         setError(err.message || 'Failed to load dataset information');
-        await loadFallbackData(); // Keep fallback
       } finally {
         setLoading(false);
-      }
-    };
-
-    const loadFallbackData = async () => {
-      try {
-        const fallbackResponse = await fetch('/dataset_links.json');
-        if (!fallbackResponse.ok) {
-          throw new Error(`Failed to fetch fallback data: ${fallbackResponse.status}`);
-        }
-        const fallbackData = await fallbackResponse.json();
-        const fallbackAssets: GitHubAsset[] = fallbackData.links.map((link: FallbackAsset) => ({
-          id: parseInt(link.id, 10) || 0,
-          name: link.type,
-          content_type: link.format === 'TAR.GZ' ? 'application/gzip' : 'application/octet-stream',
-          size: parseInt(link.size.replace(/[^0-9]/g, ''), 10) * 1024 * 1024 * 1024,
-          download_count: Math.floor(Math.random() * 100),
-          created_at: link.updated,
-          updated_at: link.updated,
-          browser_download_url: link.link,
-        }));
-        setAssets(fallbackAssets);
-        setError(null);
-      } catch (fallbackErr: any) {
-        console.error('Error loading fallback data:', fallbackErr);
-        setError(fallbackErr.message || "Failed to load fallback data.");
       }
     };
 
@@ -145,7 +108,7 @@ export const Datasets: React.FC = () => {
         );
     }
 
-    if (error && assets.length === 0) {
+    if (error) {
         return (
             <div className="flex items-center justify-center min-h-[60vh]">
                 <div className="text-red-500 bg-red-500/10 px-6 py-4 rounded-lg border border-red-500/20 max-w-md text-center">
@@ -174,17 +137,7 @@ export const Datasets: React.FC = () => {
                     </div>
                 </div>
 
-                {error && (
-                    <div className="mb-6 bg-yellow-900/20 border border-yellow-800/30 rounded-lg p-4 flex items-start gap-3">
-                        <AlertCircle className="w-5 h-5 text-yellow-500 flex-shrink-0 mt-0.5" />
-                        <div>
-                            <p className="text-yellow-500 font-medium">Note</p>
-                            <p className="text-gray-400 text-sm">
-                                We're having trouble connecting to our dataset repository. Some information may not be up to date.
-                            </p>
-                        </div>
-                    </div>
-                )}
+                {/* Alert section removed as fallback is removed */}
 
                 <div className="grid gap-6 md:grid-cols-2">
                     {assets.map((asset) => (
