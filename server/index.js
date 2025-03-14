@@ -46,7 +46,7 @@ app.get('/api/github/rich-address-wallet/:endpoint', async (req, res) => {
     }
     
     // Make the actual request to GitHub API
-    const response = await axios.get(`https://api.github.com/repos/Pymmdrza/Rich-Address-Wallet/releases/${endpoint}`, {
+    const response = await axios.get(`https://api.github.com/repos/Pymmdrza/Rich-Address-Wallet/${endpoint}`, {
       headers: {
         'Accept': 'application/json',
         'User-Agent': 'BlockHub-App/1.0'
@@ -77,12 +77,12 @@ app.get('/health/status', (req, res) => {
 // Setup API proxies
 // Bitcoin API proxy
 app.use('/api/v2', createProxyMiddleware({
-  target: 'https://btcbook.guarda.co',
+  target: 'https://bitcoin.atomicwallet.io',
   changeOrigin: true,
   pathRewrite: { '^/api/v2': '/api/v2' },
   headers: {
     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
-    'Referer': 'https://guarda.co/'
+    'Referer': 'https://atomicwallet.io/'
   },
   onProxyReq: (proxyReq) => {
     proxyReq.setHeader('Accept', 'application/json');
@@ -131,8 +131,7 @@ app.get('/api/proxy', async (req, res) => {
     const allowedDomains = [
       'api.github.com',
       'blockchain.info',
-      'ws.blockchain.info',
-      'btcbook.guarda.co'
+      'bitcoin.atomicwallet.io'
     ];
     
     const url = new URL(endpoint);
@@ -197,7 +196,7 @@ app.use((req, res, next) => {
   next();
 });
 
-// Handle client-side routing
+// For any request that doesn't match the above, send the index.html file
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, '../dist/index.html'));
 });
@@ -205,7 +204,6 @@ app.get('*', (req, res) => {
 // Start the server
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
-  console.log(`Server Domain Address : ${process.env.DOMAIN || 'localhost'}`)
   console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
   logStream.write(`[${new Date().toISOString()}] Server started on port ${PORT}\n`);
 });
