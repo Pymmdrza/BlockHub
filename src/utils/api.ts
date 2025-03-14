@@ -4,8 +4,8 @@ import blockApi from './blockApi';
 import { isBlockHash } from './validation';
 
 // Base URL should be absolute when running in Docker
-const API_BASE_URL = 'https://blockchain.info';
-const BLOCKCHAIN_API_URL = 'https://blockchain.info';
+const API_BASE_URL = '/api/v2';
+const BLOCKCHAIN_API_URL = '/block_api';
 
 const userAgents = [
   'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
