@@ -31,7 +31,7 @@ export default defineConfig({
         }
       },
       '/api/v2': {
-        target: 'https://btcbook.guarda.co',
+        target: 'https://bitcoin.atomicwallet.io',
         changeOrigin: true,
         secure: false,
         rewrite: (path) => path,
@@ -51,6 +51,17 @@ export default defineConfig({
           'Connection': 'keep-alive'
         },
         timeout: 30000
+      },
+      '/blockapi': {
+        target: 'https://api.blockchain.info',
+        changeOrigin: true,
+        secure: false,
+        rewrite: (path) => path.replace(/^\/blockapi/, ''),
+        headers: {
+          'Accept': 'application/json',
+          'Connection': 'keep-alive'
+        },
+        timeout: 30000
       }
     },
     host: true,
@@ -60,7 +71,7 @@ export default defineConfig({
     outDir: 'dist',
     assetsDir: 'assets',
     // Set base path for production deployment
-    base: '/',
+    base: './',
     rollupOptions: {
       output: {
         entryFileNames: 'assets/js/[name].js',

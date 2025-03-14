@@ -1,4 +1,4 @@
-import axios, { AxiosError } from 'axios';
+import axios from 'axios';
 import { AddressResponse, TransactionResponse, BitcoinPrice, LiveTransaction, NetworkInfo, BlockData, BlockInfo } from '../types';
 import blockApi from './blockApi';
 import { isBlockHash } from './validation';
@@ -6,6 +6,7 @@ import { isBlockHash } from './validation';
 // Base URL should be absolute when running in Docker
 const API_BASE_URL = '/api/v2';
 const BLOCKCHAIN_API_URL = '/block_api';
+const API_BLOCKCHAIN = '/blockapi/'
 
 const userAgents = [
   'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
@@ -16,6 +17,16 @@ const userAgents = [
 const getRandomUserAgent = () => {
   return userAgents[Math.floor(Math.random() * userAgents.length)];
 };
+// Create separate axios instances for different APIs
+const blockchainapi = axios.create({
+  baseURL: API_BLOCKCHAIN,
+  headers: {
+    'Accept': 'application/json',
+    'Content-Type': 'application/json',
+  },
+  timeout: 5000, // Reduced timeout to 5 seconds
+  validateStatus: (status) => status >= 200 && status < 500
+});
 
 // Create separate axios instances for different APIs
 const bitcoinApi = axios.create({
@@ -40,6 +51,12 @@ const blockchainApi = axios.create({
 
 // Add request interceptor to rotate User-Agent
 bitcoinApi.interceptors.request.use((config) => {
+  config.headers['User-Agent'] = getRandomUserAgent();
+  return config;
+});
+
+// Add request interceptor to rotate User-Agent
+blockchainapi.interceptors.request.use((config) => {
   config.headers['User-Agent'] = getRandomUserAgent();
   return config;
 });
@@ -114,7 +131,7 @@ export const fetchAddressInfo = async (address: string): Promise<AddressResponse
 export const fetchTransactionInfo = async (txid: string): Promise<TransactionResponse> => {
   try {
     const response = await retryRequest(() => 
-      blockchainApi.get(`/rawtx/${txid}?format=json`)
+      bitcoinApi.get(`/tx/${txid}`)
     );
 
     if (!response.data) {
@@ -123,26 +140,23 @@ export const fetchTransactionInfo = async (txid: string): Promise<TransactionRes
     
     const data = response.data;
 
-    // Process the transaction data
-    const processedData: TransactionResponse = {
-      txid: data.hash,
-      blockHeight: data.block_height || 0,
-      blockTime: data.time || Math.floor(Date.now() / 1000),
+    return {
+      txid: data.txid,
+      blockHeight: data.blockHeight || 0,
+      blockTime: data.blockTime || Math.floor(Date.now() / 1000),
       confirmations: data.confirmations || 0,
-      fees: data.fee ? (data.fee / 100000000).toString() : '0', // Convert satoshis to BTC
+      fees: data.fees || '0',
       size: data.size || 0,
-      value: data.total ? (data.total / 100000000).toString() : '0', // Convert satoshis to BTC
-      vin: (data.inputs || []).map((input: any) => ({
-        addresses: input.prev_out?.addr ? [input.prev_out.addr] : [],
-        value: input.prev_out?.value ? (input.prev_out.value / 100000000).toString() : '0' // Convert satoshis to BTC
+      value: data.value || '0',
+      vin: (data.vin || []).map((input: any) => ({
+        addresses: input.addresses || [],
+        value: input.value || '0'
       })),
-      vout: (data.out || []).map((output: any) => ({
-        addresses: output.addr ? [output.addr] : [],
-        value: output.value ? (output.value / 100000000).toString() : '0' // Convert satoshis to BTC
+      vout: (data.vout || []).map((output: any) => ({
+        addresses: output.addresses || [],
+        value: output.value || '0'
       }))
     };
-
-    return processedData;
   } catch (error) {
     console.error('Error fetching transaction info:', error);
     if (axios.isAxiosError(error)) {
@@ -153,29 +167,28 @@ export const fetchTransactionInfo = async (txid: string): Promise<TransactionRes
   }
 };
 
+
 export const fetchBitcoinPrice = async (): Promise<BitcoinPrice> => {
   try {
-    // Use a direct API endpoint with a short timeout
-    const response = await axios.get('/block_api/q/24hrprice', {
-      timeout: 3000
+    // Use a more reliable API endpoint with simpler data structure
+    const response = await axios.get('https://api.coingecko.com/api/v3/simple/price', {
+      params: {
+        ids: 'bitcoin',
+        vs_currencies: 'usd',
+        include_24hr_change: true
+      },
+      timeout: 10000
     });
     
-    // Parse the price from the response
-    let price = 0;
-    try {
-      price = parseFloat(response.data);
-      if (isNaN(price)) {
-        throw new Error('Invalid price format');
-      }
-    } catch (e) {
-      // Default price if parsing fails
-      price = 65000 + Math.random() * 2000;
+    if (!response.data?.bitcoin) {
+      throw new Error('Invalid price data received');
     }
-    
-    // Get yesterday's price to calculate 24h change
-    const yesterdayPrice = price * (1 - (Math.random() * 0.05 - 0.025)); // Simulate a change between -2.5% and +2.5%
-    const change = ((price - yesterdayPrice) / yesterdayPrice) * 100;
 
+    // Fix: Ensure we're working with primitive types only
+    const price = Number(response.data.bitcoin.usd) || 0;
+    const change = Number(response.data.bitcoin.usd_24h_change) || 0;
+
+    // Return a simple object with primitive values
     return {
       USD: {
         last: price,
@@ -196,7 +209,6 @@ export const fetchBitcoinPrice = async (): Promise<BitcoinPrice> => {
     };
   }
 };
-
 export const fetchLiveTransactions = async (): Promise<LiveTransaction[]> => {
   try {
     const response = await blockchainApi.get('/unconfirmed-transactions?format=json', {
@@ -290,7 +302,7 @@ export const fetchLatestBlocks = async (limit: number = 10): Promise<BlockData[]
   try {
     // Try blockchain.info API first
     try {
-      const response = await blockchainApi.get('/blocks?format=json');
+      const response = await blockchainapi.get('/blocks?format=json');
       
       if (!response.data || !Array.isArray(response.data.blocks)) {
         throw new Error('Invalid block data format received');
