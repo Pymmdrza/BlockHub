@@ -434,11 +434,11 @@ export const formatBitcoinValue = (value: string | number): string => {
   const btcValue = numValue / 100000000;
   
   if (btcValue >= 1000000) {
-    return `${(btcValue / 1000000).toFixed(2)}M BTC`;
+    return `${(btcValue / 1000000).toFixed(2)}M`;
   }
   if (btcValue >= 1000) {
-    return `${(btcValue / 1000).toFixed(2)}K BTC`;
+    return `${(btcValue / 1000).toFixed(2)}K`;
   }
   
-  return `${btcValue.toFixed(8)} BTC`;
+  return `${btcValue.toFixed(8)}`;
 };
