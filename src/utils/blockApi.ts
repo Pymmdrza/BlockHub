@@ -3,6 +3,7 @@ import { BlockInfo, BlockData, NetworkInfo, ChartDataPoint, TransactionResponse 
 
 // Base URL for blockchain.info API
 const BLOCKCHAIN_API_URL = '/block_api';
+const API_BLOCKCHAIN = '/blockapi/'
 
 // User agents to rotate for API requests
 const userAgents = [
@@ -27,8 +28,27 @@ const blockchainApi = axios.create({
   validateStatus: (status) => status >= 200 && status < 500
 });
 
+// Create axios instance for blockchain.info API
+const blockchainapi = axios.create({
+  baseURL: API_BLOCKCHAIN,
+  headers: {
+    'Accept': 'application/json',
+    'Content-Type': 'application/json',
+  },
+  timeout: 5000,
+  validateStatus: (status) => status >= 200 && status < 500
+});
+
+
 // Add request interceptor to rotate User-Agent
 blockchainApi.interceptors.request.use((config) => {
+  if (config.headers) {
+    config.headers['User-Agent'] = getRandomUserAgent();
+  }
+  return config;
+});
+// Add request interceptor to rotate User-Agent
+blockchainapi.interceptors.request.use((config) => {
   if (config.headers) {
     config.headers['User-Agent'] = getRandomUserAgent();
   }
@@ -53,14 +73,6 @@ const getLatestBlockHeight = async (): Promise<number> => {
       cachedBlockHeight = response.data.height;
       return response.data.height;
     }
-
-    // If that fails, try alternative API
-    const altResponse = await axios.get('/api/v2/stats');
-    if (altResponse.data?.blockHeight) {
-      cachedBlockHeight = altResponse.data.blockHeight;
-      return altResponse.data.blockHeight;
-    }
-
     throw new Error('Could not get latest block height');
   } catch (error) {
     console.warn('Failed to get latest block height:', error);
@@ -103,7 +115,7 @@ export const fetchLatestBlocks = async (limit: number = 10): Promise<BlockData[]
   try {
     // Try blockchain.info API first
     try {
-      const response = await blockchainApi.get('/blocks?format=json');
+      const response = await blockchainApi.get('/latestblock?format=json');
       
       if (!response.data || !Array.isArray(response.data.blocks)) {
         throw new Error('Invalid block data format received');
@@ -173,7 +185,7 @@ export const fetchNetworkStats = async (): Promise<NetworkInfo> => {
     // Try primary API first
     try {
       const [stats, latestBlock, difficulty, hashRate] = await Promise.all([
-        blockchainApi.get('/stats?format=json'),
+        blockchainapi.get('stats?format=json'),
         blockchainApi.get('/latestblock?format=json'),
         blockchainApi.get('/q/getdifficulty'),
         blockchainApi.get('/q/hashrate')
@@ -208,7 +220,7 @@ export const fetchNetworkStats = async (): Promise<NetworkInfo> => {
       console.warn('Primary API failed, trying alternative:', primaryError);
       
       // Try alternative API
-      const altResponse = await axios.get('/api/v2/stats', {
+      const altResponse = await blockchainapi.get('stats?format=json', {
         headers: {
           'Accept': 'application/json',
           'User-Agent': getRandomUserAgent()
@@ -269,68 +281,7 @@ const extractMinerFromCoinbase = (coinbaseData: string): string => {
   
   return coinbaseData || 'Unknown';
 };
-
-/**
- * Fetch transaction info
- */
-export const fetchTransactionInfo = async (txid: string): Promise<TransactionResponse> => {
-  try {
-    // Try to get transaction data from blockchain.info API
-    const response = await axios.get(`${BLOCKCHAIN_API_URL}/rawtx/${txid}`, {
-      headers: {
-        'Accept': 'application/json',
-        'User-Agent': getRandomUserAgent()
-      }
-    });
-
-    if (!response.data || !response.data.hash) {
-      throw new Error('Invalid transaction data received');
-    }
-
-    // Transform the blockchain.info response to our TransactionResponse format
-    return {
-      txid: response.data.hash,
-      blockHeight: response.data.block_height || 0,
-      blockTime: response.data.time || Math.floor(Date.now() / 1000),
-      confirmations: response.data.block_height ? 1 : 0,
-      fees: (response.data.fee || 0).toString(),
-      size: response.data.size || 0,
-      value: (response.data.out.reduce((sum: number, out: any) => sum + (out.value || 0), 0)).toString(),
-      vin: response.data.inputs.map((input: any) => ({
-        addresses: input.prev_out?.addr ? [input.prev_out.addr] : [],
-        value: (input.prev_out?.value || 0).toString()
-      })),
-      vout: response.data.out.map((output: any) => ({
-        addresses: output.addr ? [output.addr] : [],
-        value: (output.value || 0).toString()
-      }))
-    };
-  } catch (error) {
-    console.error('Error fetching transaction:', error);
-    
-    // Try alternative API if primary fails
-    try {
-      const altResponse = await axios.get(`/api/v2/tx/${txid}`, {
-        headers: {
-          'Accept': 'application/json',
-          'User-Agent': getRandomUserAgent()
-        }
-      });
-
-      if (!altResponse.data) {
-        throw new Error('Invalid transaction data from alternative API');
-      }
-
-      return altResponse.data;
-    } catch (altError) {
-      console.error('Alternative API also failed:', altError);
-      throw new Error('Failed to fetch transaction data from all sources');
-    }
-  }
-};
-
 export default {
   fetchLatestBlocks,
-  fetchNetworkStats,
-  fetchTransactionInfo
+  fetchNetworkStats
 };

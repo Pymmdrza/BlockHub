@@ -436,8 +436,8 @@ const calculateBlockReward = (height: number): number => {
 };
 
 export const fetchNetworkStats = blockApi.fetchNetworkStats;
-export const fetchMempoolInfo = blockApi.fetchMempoolInfo;
-export const generateNetworkChartData = blockApi.generateNetworkChartData;
+//export const fetchMempoolInfo = blockApi.fetchMempoolInfo;
+//export const generateNetworkChartData = blockApi.generateNetworkChartData;
 
 export const formatBitcoinValue = (value: string | number): string => {
   const numValue = typeof value === 'string' ? parseFloat(value) : value;
