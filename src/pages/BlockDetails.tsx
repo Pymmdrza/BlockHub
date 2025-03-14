@@ -35,13 +35,16 @@ export const BlockDetails: React.FC = () => {
       
       try {
         const blockData = await fetchBlockDetails(hashOrHeight);
-        if (!blockData || !blockData.height) {
+        console.log('Block data:', blockData); // Debug log
+        
+        if (!blockData || !blockData.hash) {
           throw new Error('Invalid block data received');
         }
+        
         setBlock(blockData);
       } catch (err) {
         console.error('Error fetching block details:', err);
-        setError('Failed to load block details');
+        setError(err instanceof Error ? err.message : 'Failed to load block details');
       } finally {
         setIsLoading(false);
       }

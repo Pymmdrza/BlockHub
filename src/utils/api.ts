@@ -369,24 +369,25 @@ export const fetchBlockDetails = async (hashOrHeight: string): Promise<BlockInfo
     }
     
     const data = response.data;
+    console.log('Block data received:', data); // Debug log
 
     // Process the block data according to blockchain.info API format
     const processedData: BlockInfo = {
-      hash: data.hash,
+      hash: data.hash || '',
       height: data.height || 0,
       time: data.time || Math.floor(Date.now() / 1000),
       size: data.size || 0,
       txCount: data.n_tx || 0,
-      prevBlockHash: data.prev_block,
-      nextBlockHash: data.next_block,
-      merkleRoot: data.mrkl_root,
-      version: data.ver,
-      bits: data.bits,
-      nonce: data.nonce,
-      weight: data.weight,
-      difficulty: data.difficulty,
-      transactions: data.tx || [],
-      reward: data.reward || 0
+      prevBlockHash: data.prev_block || '',
+      nextBlockHash: data.next_block || '',
+      merkleRoot: data.mrkl_root || '',
+      version: data.ver || 0,
+      bits: data.bits || 0,
+      nonce: data.nonce || 0,
+      weight: data.weight || 0,
+      difficulty: data.difficulty || 0,
+      transactions: Array.isArray(data.tx) ? data.tx : [],
+      reward: calculateBlockReward(data.height || 0)
     };
 
     return processedData;
@@ -398,6 +399,15 @@ export const fetchBlockDetails = async (hashOrHeight: string): Promise<BlockInfo
     }
     throw error;
   }
+};
+
+// Helper function to calculate block reward based on height
+const calculateBlockReward = (height: number): number => {
+  const INITIAL_REWARD = 50;
+  const HALVING_INTERVAL = 210000;
+  const halvings = Math.floor(height / HALVING_INTERVAL);
+  if (halvings >= 64) return 0; // After 64 halvings, reward becomes 0
+  return INITIAL_REWARD / Math.pow(2, halvings);
 };
 
 export const fetchNetworkStats = blockApi.fetchNetworkStats;
