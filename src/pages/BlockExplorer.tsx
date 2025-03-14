@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Zap, Clock, Database, ArrowRight, Calendar, Hash } from 'lucide-react';
+import { Zap, Clock, Database, ArrowRight, Calendar, Hash, Copy } from 'lucide-react';
 import websocketService from '../services/websocketService';
 import { fetchLatestBlocks } from '../utils/api';
 import { BlockData } from '../types';
 import { Card, CardContent, CardHeader, CardTitle, Container, PageHeader, Spinner, Skeleton } from '../components/ui';
+import { isBlockHash } from '../utils/validation';
 
 export const BlockExplorer: React.FC = () => {
   const [blocks, setBlocks] = useState<BlockData[]>([]);
@@ -116,6 +117,10 @@ export const BlockExplorer: React.FC = () => {
     return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
   };
 
+  const copyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text);
+  };
+
   return (
     <Container>
       <PageHeader 
@@ -203,7 +208,28 @@ export const BlockExplorer: React.FC = () => {
                     <td>
                       <div className="flex items-center">
                         <Hash className="w-4 h-4 text-gray-500 mr-2 flex-shrink-0" />
-                        <span className="font-mono">{block.hash.substring(0, 16)}...</span>
+                        <div className="flex-1 min-w-0">
+                          {isBlockHash(block.hash) ? (
+                            <>
+                              <Link 
+                                to={`/block/${block.hash}`}
+                                className="font-mono text-sm text-orange-500 hover:text-orange-400 block truncate"
+                                title={block.hash}
+                              >
+                                {block.hash}
+                              </Link>
+                              <button 
+                                onClick={() => copyToClipboard(block.hash)}
+                                className="p-1 hover:bg-gray-800 rounded ml-2 flex-shrink-0"
+                                title="Copy block hash"
+                              >
+                                <Copy className="w-4 h-4" />
+                              </button>
+                            </>
+                          ) : (
+                            <span className="text-red-500">Invalid block hash</span>
+                          )}
+                        </div>
                       </div>
                     </td>
                     <td>

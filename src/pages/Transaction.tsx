@@ -221,17 +221,25 @@ export const Transaction: React.FC = () => {
                       <div className="min-w-0 flex-1">
                         {input.addresses && input.addresses.length > 0 ? (
                           input.addresses.map((addr) => (
-                            <Link
-                              key={addr}
-                              to={`/address/${addr}`}
-                              className="block text-orange-500 hover:text-orange-400 font-mono text-sm break-all"
-                              style={{
-                                wordBreak: 'break-word',
-                                overflowWrap: 'break-word'
-                              }}
-                            >
-                              {addr}
-                            </Link>
+                            <div key={addr} className="flex items-center gap-2">
+                              <Link
+                                to={`/address/${addr}`}
+                                className="block text-orange-500 hover:text-orange-400 font-mono text-sm break-all flex-1"
+                                style={{
+                                  wordBreak: 'break-word',
+                                  overflowWrap: 'break-word'
+                                }}
+                              >
+                                {addr}
+                              </Link>
+                              <button 
+                                onClick={() => copyToClipboard(addr)}
+                                className="p-1 hover:bg-gray-800 rounded flex-shrink-0"
+                                title="Copy address"
+                              >
+                                <Copy className="w-4 h-4" />
+                              </button>
+                            </div>
                           ))
                         ) : (
                           <span className="text-gray-500 italic">No address data available</span>
@@ -279,17 +287,25 @@ export const Transaction: React.FC = () => {
                       <div className="min-w-0 flex-1">
                         {output.addresses && output.addresses.length > 0 ? (
                           output.addresses.map((addr) => (
-                            <Link
-                              key={addr}
-                              to={`/address/${addr}`}
-                              className="block text-green-500 hover:text-green-400 font-mono text-sm break-all"
-                              style={{
-                                wordBreak: 'break-word',
-                                overflowWrap: 'break-word'
-                              }}
-                            >
-                              {addr}
-                            </Link>
+                            <div key={addr} className="flex items-center gap-2">
+                              <Link
+                                to={`/address/${addr}`}
+                                className="block text-green-500 hover:text-green-400 font-mono text-sm break-all flex-1"
+                                style={{
+                                  wordBreak: 'break-word',
+                                  overflowWrap: 'break-word'
+                                }}
+                              >
+                                {addr}
+                              </Link>
+                              <button 
+                                onClick={() => copyToClipboard(addr)}
+                                className="p-1 hover:bg-gray-800 rounded flex-shrink-0"
+                                title="Copy address"
+                              >
+                                <Copy className="w-4 h-4" />
+                              </button>
+                            </div>
                           ))
                         ) : (
                           <span className="text-gray-500 italic">No address data available</span>

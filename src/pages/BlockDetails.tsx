@@ -5,6 +5,7 @@ import { fetchBlockDetails } from '../utils/api';
 import { BlockInfo, WebSocketTransaction } from '../types';
 import { Skeleton, SkeletonText } from '../components/ui/Skeleton';
 import { formatBitcoinValue } from '../utils/api';
+import { isBlockHash } from '../utils/validation';
 
 export const BlockDetails: React.FC = () => {
   const { hashOrHeight } = useParams<{ hashOrHeight: string }>();
@@ -18,6 +19,13 @@ export const BlockDetails: React.FC = () => {
     const fetchBlock = async () => {
       if (!hashOrHeight) {
         setError('No block hash or height provided');
+        setIsLoading(false);
+        return;
+      }
+
+      // Validate block hash if it's not a height
+      if (!/^\d+$/.test(hashOrHeight) && !isBlockHash(hashOrHeight)) {
+        setError('Invalid block hash format');
         setIsLoading(false);
         return;
       }
@@ -42,8 +50,10 @@ export const BlockDetails: React.FC = () => {
     fetchBlock();
   }, [hashOrHeight]);
 
-  const copyToClipboard = (text: string) => {
-    navigator.clipboard.writeText(text);
+  const copyToClipboard = (text: string | undefined | null) => {
+    if (text) {
+      navigator.clipboard.writeText(text);
+    }
   };
 
   const formatTime = (timestamp: number): string => {

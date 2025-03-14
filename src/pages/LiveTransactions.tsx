@@ -289,16 +289,25 @@ export const LiveTransactions: React.FC = () => {
                               input.prev_out?.addr && (
                                 <div key={`${tx.hash}-input-${index}`} className="flex flex-col sm:flex-row sm:items-center gap-2">
                                   <div className="min-w-0 flex-1">
-                                    <Link
-                                      to={`/address/${input.prev_out.addr}`}
-                                      className="text-orange-500 hover:text-orange-400 font-mono text-sm break-all"
-                                      style={{
-                                        wordBreak: 'break-word',
-                                        overflowWrap: 'break-word'
-                                      }}
-                                    >
-                                      {input.prev_out.addr}
-                                    </Link>
+                                    <div className="flex items-center gap-2">
+                                      <Link
+                                        to={`/address/${input.prev_out.addr}`}
+                                        className="text-orange-500 hover:text-orange-400 font-mono text-sm break-all flex-1"
+                                        style={{
+                                          wordBreak: 'break-word',
+                                          overflowWrap: 'break-word'
+                                        }}
+                                      >
+                                        {input.prev_out.addr}
+                                      </Link>
+                                      <button 
+                                        onClick={() => input.prev_out?.addr && copyToClipboard(input.prev_out.addr)}
+                                        className="p-1 hover:bg-gray-800 rounded flex-shrink-0"
+                                        title="Copy address"
+                                      >
+                                        <Copy className="w-4 h-4" />
+                                      </button>
+                                    </div>
                                   </div>
                                   <div className="text-sm text-gray-400 flex-shrink-0 whitespace-nowrap">
                                     {formatValue(input.prev_out.value)} BTC
@@ -328,16 +337,25 @@ export const LiveTransactions: React.FC = () => {
                             output.addr && (
                               <div key={`${tx.hash}-output-${index}`} className="flex flex-col sm:flex-row sm:items-center gap-2">
                                 <div className="min-w-0 flex-1">
-                                  <Link
-                                    to={`/address/${output.addr}`}
-                                    className="text-green-500 hover:text-green-400 font-mono text-sm break-all"
-                                    style={{
-                                      wordBreak: 'break-word',
-                                      overflowWrap: 'break-word'
-                                    }}
-                                  >
-                                    {output.addr}
-                                  </Link>
+                                  <div className="flex items-center gap-2">
+                                    <Link
+                                      to={`/address/${output.addr}`}
+                                      className="text-green-500 hover:text-green-400 font-mono text-sm break-all flex-1"
+                                      style={{
+                                        wordBreak: 'break-word',
+                                        overflowWrap: 'break-word'
+                                      }}
+                                    >
+                                      {output.addr}
+                                    </Link>
+                                    <button 
+                                      onClick={() => output.addr && copyToClipboard(output.addr)}
+                                      className="p-1 hover:bg-gray-800 rounded flex-shrink-0"
+                                      title="Copy address"
+                                    >
+                                      <Copy className="w-4 h-4" />
+                                    </button>
+                                  </div>
                                 </div>
                                 <div className="text-sm text-gray-400 flex-shrink-0 whitespace-nowrap">
                                   {formatValue(output.value)} BTC
