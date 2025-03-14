@@ -38,8 +38,8 @@ export const isBlockHash = (hash: string): boolean => {
   }
 
   // Heuristic: Block Hashes are more likely to start with 6 consecutive zeros
-  const leadingZeros = hash.substring(0, 6);
-  if (leadingZeros === '000000') {
+  const leadingZeros = hash.substring(0, 12);
+  if (leadingZeros === '000000000000') {
     return true; // Likely a Block Hash based on heuristic
   }
 
