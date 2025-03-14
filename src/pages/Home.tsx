@@ -155,11 +155,11 @@ const Home: React.FC = () => {
   // Handle click on Latest Block card
   const handleLatestBlockClick = () => {
     if (networkStats && networkStats.latestBlockHash) {
-      window.location.href = `#/block/${networkStats.latestBlockHash}`;
+      window.location.href = `/block/${networkStats.latestBlockHash}`;
     } else if (networkStats && networkStats.blockHeight) {
-      window.location.href = `#/block/${networkStats.blockHeight}`;
+      window.location.href = `/block/${networkStats.blockHeight}`;
     } else {
-      window.location.href = '#/blocks';
+      window.location.href = '/blocks';
     }
   };
 
@@ -198,7 +198,7 @@ const Home: React.FC = () => {
           title="Hash Rate"
           value={networkStats ? `${networkStats.hashRate.toFixed(2)} EH/s` : "0 EH/s"}
           icon={<BarChart2 className="w-5 h-5" />}
-          onClick={() => window.location.href = '#/network'}
+          onClick={() => window.location.href = '/network'}
           isLoading={isNetworkStatsLoading}
           chartData={hashRateHistory}
           chartColor="#3B82F6"
@@ -209,7 +209,7 @@ const Home: React.FC = () => {
           title="Mempool Size"
           value={networkStats ? `${networkStats.mempoolSize.toFixed(2)} MB` : "0 MB"}
           icon={<Clock className="w-5 h-5" />}
-          onClick={() => window.location.href = '#/mempool'}
+          onClick={() => window.location.href = '/mempool'}
           isLoading={isNetworkStatsLoading}
           chartData={mempoolHistory}
           chartColor="#10B981"
