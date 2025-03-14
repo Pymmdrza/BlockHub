@@ -172,7 +172,7 @@ const Home: React.FC = () => {
               Bitcoin Explorer
             </h1>
             <p className="text-gray-400 text-lg mb-8">
-              Search for Bitcoin addresses, transactions, and blocks to explore the blockchain
+              Search for Bitcoin addresses, transactions, and blocks to explore the Mainnet Bitcoin
             </p>
             <SearchBar />
           </div>
