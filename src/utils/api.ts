@@ -369,7 +369,7 @@ export const fetchBlockDetails = async (hashOrHeight: string): Promise<BlockInfo
     }
     
     const data = response.data;
-    console.log('Block data received:', data); // Debug log
+    console.log('Raw block data:', data); // Debug log
 
     // Process the block data according to blockchain.info API format
     const processedData: BlockInfo = {
@@ -386,9 +386,22 @@ export const fetchBlockDetails = async (hashOrHeight: string): Promise<BlockInfo
       nonce: data.nonce || 0,
       weight: data.weight || 0,
       difficulty: data.difficulty || 0,
-      transactions: Array.isArray(data.tx) ? data.tx : [],
-      reward: calculateBlockReward(data.height || 0)
+      transactions: Array.isArray(data.tx) ? data.tx.map((tx: any) => ({
+        hash: tx.hash || '',
+        size: tx.size || 0,
+        fee: tx.fee || 0,
+        time: tx.time || data.time || Math.floor(Date.now() / 1000),
+        inputs: tx.inputs || [],
+        out: tx.out || []
+      })) : [],
+      reward: calculateBlockReward(data.height || 0),
+      miner: extractMinerFromCoinbase(data.tx?.[0]?.inputs?.[0]?.script || '')
     };
+
+    // Validate the processed data
+    if (!isBlockHash(processedData.hash)) {
+      throw new Error('Invalid block data: hash is not in correct format');
+    }
 
     return processedData;
   } catch (error) {
