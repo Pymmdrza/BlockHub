@@ -1,0 +1,44 @@
+{
+  "links": [
+    {
+      "type": "Latest All Bitcoin Addresses",
+      "link": "https://github.com/Pymmdrza/Rich-Address-Wallet/releases/download/Bitcoin/Latest_Bitcoin_Addresses.tsv.gz",
+      "format": "TSV.GZ",
+      "size": "1.47 GB",
+      "description": "Complete Bitcoin blockchain data including all blocks, transactions, and metadata from genesis to present",
+      "updated": "2024-03-15T12:00:00Z"
+    },
+    {
+      "type": "Rich Bitcoin Addresses",
+      "link": "https://github.com/Pymmdrza/Rich-Address-Wallet/releases/download/Bitcoin/Latest_Rich_Bitcoin_Address.txt.gz",
+      "format": ".txt.gz",
+      "size": "995 MB",
+      "description": "Historical transaction data with detailed information about inputs, outputs, and fees",
+      "updated": "2024-03-15T12:00:00Z"
+    },
+    {
+      "type": "Rich Bitcoin Address BECH32 Type",
+      "link": "https://github.com/Pymmdrza/Rich-Address-Wallet/releases/download/Bitcoin/Latest_Rich_Bitcoin_BECH32.txt.gz",
+      "format": ".txt.gz",
+      "size": "464 MB",
+      "description": "Comprehensive list of Bitcoin addresses with their transaction histories and balances",
+      "updated": "2024-03-15T12:00:00Z"
+    },
+    {
+      "type": "Rich Bitcoin Address P2PKH Type",
+      "link": "https://github.com/Pymmdrza/Rich-Address-Wallet/releases/download/Bitcoin/Latest_Rich_Bitcoin_P2PKH.txt.gz",
+      "format": ".txt.gz",
+      "size": "345 MB",
+      "description": "Historical network statistics including hashrate, difficulty, and node distribution",
+      "updated": "2024-03-15T12:00:00Z"
+    },
+	{
+      "type": "Rich Bitcoin Address P2SH Type",
+      "link": "https://github.com/Pymmdrza/Rich-Address-Wallet/releases/download/Bitcoin/Latest_Rich_Bitcoin_P2SH.txt.gz",
+      "format": ".txt.gz",
+      "size": "133 MB",
+      "description": "Historical network statistics including hashrate, difficulty, and node distribution",
+      "updated": "2024-03-15T12:00:00Z"
+    }
+  ]
+}
