@@ -1,10 +1,11 @@
-name: Build and Deploy
+name: Github Page Build and Deploy
 
 on:
   push:
-    branches: [ main ]
+    branches: [ pager ]
   pull_request:
-    branches: [ main ]
+    branches: [ pager ]
+  workflow_dispatch:
 
 jobs:
   build:
