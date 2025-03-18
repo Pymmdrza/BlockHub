@@ -7,6 +7,7 @@ export default defineConfig({
   optimizeDeps: {
     exclude: ['lucide-react'],
   },
+  base: '/',
   server: {
     proxy: {
       // Proxy GitHub API requests to hide the actual API endpoint from clients
@@ -51,45 +52,43 @@ export default defineConfig({
           'Connection': 'keep-alive'
         },
         timeout: 30000
-      },
-      '/blockapi': {
-        target: 'https://api.blockchain.info',
-        changeOrigin: true,
-        secure: false,
-        rewrite: (path) => path.replace(/^\/blockapi/, ''),
-        headers: {
-          'Accept': 'application/json',
-          'Connection': 'keep-alive'
-        },
-        timeout: 30000
       }
     },
     host: true,
-    port: 9009
+    port: 9000,
+    historyApiFallback: true // Enable HTML5 history API fallback
   },
   build: {
     outDir: 'dist',
     assetsDir: 'assets',
-    // Set base path for production deployment
-    base: './',
+    sourcemap: true,
+    minify: 'terser',
     rollupOptions: {
       output: {
-        entryFileNames: 'assets/js/[name].js',
-        chunkFileNames: 'assets/js/[name]-[hash].js',
+        entryFileNames: 'assets/js/[name].[hash].js',
+        chunkFileNames: 'assets/js/[name].[hash].js',
         assetFileNames: (assetInfo) => {
           if (/\.(css)$/.test(assetInfo.name ?? '')) {
-            return 'assets/css/[name].[ext]';
+            return 'assets/css/[name].[hash].[ext]';
           }
           if (/\.(ico|png|jpg|jpeg|gif|svg|webp)$/.test(assetInfo.name ?? '')) {
-            return 'assets/img/[name].[ext]';
+            return 'assets/img/[name].[hash].[ext]';
           }
-          return 'assets/[name].[ext]';
+          return 'assets/[name].[hash].[ext]';
         },
         manualChunks: {
           vendor: ['react', 'react-dom', 'react-router-dom'],
+          icons: ['lucide-react'],
+          charts: ['recharts']
         },
       },
     },
+    terserOptions: {
+      compress: {
+        drop_console: true,
+        drop_debugger: true
+      }
+    }
   },
   publicDir: 'public',
 });
