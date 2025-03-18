@@ -24,7 +24,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-
+        with:
+          ref: pager # Check out the 'pager' branch
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
@@ -54,11 +55,13 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     needs: build
-    if: github.ref == 'refs/heads/pager' && github.event_name == 'push' # Deploy only on push to 'pager'
+    if: github.ref == 'refs/heads/pager' && github.event_name == 'push'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          ref: pager # Check out the 'pager' branch
       - name: Setup Pages
         uses: actions/configure-pages@v5
       - name: Upload artifact
